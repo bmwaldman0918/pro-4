@@ -1,18 +1,21 @@
 import Mathlib.Data.Stream.Defs
 
-partial def setDiff (l l' : Stream' Nat) : Stream' Nat :=
-  let x := Stream'.head l
-  let xs := Stream'.tail l
+def setDiff (n : Nat) (l l' : Stream' Nat) : List Nat :=
+  match n with
+  | Nat.zero => []
+  | Nat.succ m =>
+    let x := Stream'.head l
+    let xs := Stream'.tail l
 
-  let y := Stream'.head l'
-  let ys := Stream'.tail l'
+    let y := Stream'.head l'
+    let ys := Stream'.tail l'
 
-  if x < y
-    then Stream'.cons x (setDiff xs l')
-  else if x == y
-    then setDiff xs ys
-  else -- if x > y
-    setDiff l ys
+    if x < y
+      then  x :: (setDiff m xs l')
+    else if x == y
+      then setDiff m xs ys
+    else -- if x > y
+      setDiff m l ys
 
 def makeP (f : Nat) (l : Stream' Nat) : Stream' Nat :=
   2 :: (setDiff (Stream' Nat) l)
