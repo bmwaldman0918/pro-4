@@ -10,3 +10,5 @@ lean_lib «Pro4» where
 @[default_target]
 lean_exe «pro-4» where
   root := `Main
+
+require "leanprover-community" / "mathlib"
