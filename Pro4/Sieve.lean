@@ -1,20 +1,26 @@
 import Mathlib.Data.Stream.Defs
 
+def setDiff (fuel : Nat) (l l' : Stream' Nat) : List Nat :=
+  match fuel with
+  | Nat.zero => []
+  | Nat.succ m =>
+    let x := Stream'.head l
+    let xs := Stream'.tail l
 -- set difference
 -- elements in l but NOT in l'
 partial def setDiff (l l' : Stream' Nat) : Stream' Nat :=
   let x := Stream'.head l
   let xs := Stream'.tail l
 
-  let y := Stream'.head l'
-  let ys := Stream'.tail l'
+    let y := Stream'.head l'
+    let ys := Stream'.tail l'
 
-  if x < y
-    then Stream'.cons x (setDiff xs l')
-  else if x == y
-    then setDiff xs ys
-  else -- if x > y
-    setDiff l ys
+    if x < y
+      then  x :: (setDiff m xs l')
+    else if x == y
+      then setDiff m xs ys
+    else -- if x > y
+      setDiff m l ys
 
 -- natural numbers starting from 3
 def natsThree : Stream' Nat :=
