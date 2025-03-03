@@ -1,7 +1,8 @@
 import Mathlib.Data.Stream.Defs
 
--- set difference
--- elements in l but NOT in l'
+-- FUEL: infinite generator
+-- L, L': infinite lists
+-- All elements in L but not in L'.
 def setDiff (fuel : Nat) (l l' : Stream' Nat) : List Nat :=
   match fuel with
   | Nat.zero => []
@@ -19,15 +20,26 @@ def setDiff (fuel : Nat) (l l' : Stream' Nat) : List Nat :=
     else -- if x > y
       setDiff m l ys
 
--- natural numbers starting from 3
+-- The natural numbers starting from 3.
 def natsThree : Stream' Nat :=
   Stream'.drop 3 Stream'.nats
 
--- L is the list of composites
-def makeP (l : Stream' Nat) : Stream' Nat :=
-  Stream'.cons 2 (setDiff (natsThree) l)
+-- FUEL: infinite generator
+-- L: infinite list of composites
+def makeP (fuel: Nat) (l : Stream' Nat) : List Nat :=
+  2 :: setDiff fuel natsThree l
+
+-- All multiples of P starting with its square.
+def multiples (fuel: Nat) (p: Nat): List Nat :=
+  match fuel with
+  | Nat.zero => []
+  | Nat.succ m =>
+    (multiples m p) ++ [p * (p + m)]
+
+-- def mergeAll
 
 -- def makeC (l : List Nat) : List Nat :=
+
 
 def eratosthenes (fuel : Nat) : List Nat :=
   match fuel with
