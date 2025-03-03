@@ -1,16 +1,13 @@
 import Mathlib.Data.Stream.Defs
 
+-- set difference
+-- elements in l but NOT in l'
 def setDiff (fuel : Nat) (l l' : Stream' Nat) : List Nat :=
   match fuel with
   | Nat.zero => []
   | Nat.succ m =>
     let x := Stream'.head l
     let xs := Stream'.tail l
--- set difference
--- elements in l but NOT in l'
-partial def setDiff (l l' : Stream' Nat) : Stream' Nat :=
-  let x := Stream'.head l
-  let xs := Stream'.tail l
 
     let y := Stream'.head l'
     let ys := Stream'.tail l'
