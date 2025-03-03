@@ -1,7 +1,7 @@
 import Mathlib.Data.Stream.Defs
 
-def setDiff (n : Nat) (l l' : Stream' Nat) : List Nat :=
-  match n with
+def setDiff (fuel : Nat) (l l' : Stream' Nat) : List Nat :=
+  match fuel with
   | Nat.zero => []
   | Nat.succ m =>
     let x := Stream'.head l
