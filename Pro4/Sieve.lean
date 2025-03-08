@@ -86,3 +86,6 @@ mutual
     | Nat.succ f => makeC f (primes f)
 
 end
+
+#eval (Stream'.take 10 (composites 10))
+#eval (Stream'.take 10 (primes 10))
