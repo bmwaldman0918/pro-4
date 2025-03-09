@@ -1,4 +1,5 @@
 import Mathlib.Data.Stream.Defs
+import Mathlib.Data.Nat.Prime.Defs
 import Pro4.Sieve
 
 -- proving the correctness of the sieve
@@ -6,8 +7,20 @@ import Pro4.Sieve
 -- we want to prove that there exists a fuel f for which we can produce any arbitrary number x of prime numbers
 -- then that those arbitrary primes are exactly the correct first x primes
 
--- we need a canonical stream of primes to compare with
-def primes' (f : fuel) : Stream' Nat := sorry
+-- FUEL: upper limit non-inclusive of list of all primes
+-- e.g. fuel = 10, primes = [2, 3, 5, 7]
+-- e.g. fuel = 50, primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]
+def primesList (fuel : Nat) : List Nat :=
+  match fuel with
+  | Nat.zero => []
+  | Nat.succ m =>
+    if (Nat.Prime m)
+      then primesList m ++ [m]
+    else
+      primesList m
+
+def primes' (fuel: Nat) : Stream' Nat :=
+  Stream'.appendStream' (primesList fuel) (Stream'.const 0)
 
 theorem sieve_correct : ∀ (n m : Nat), ∃ f, (Stream'.take n (primes f)) = (Stream'.take n (primes' m)) :=
   by sorry
