@@ -11,3 +11,22 @@ def primes' (f : fuel) : Stream' Nat := sorry
 
 theorem sieve_correct : ∀ (n m : Nat), ∃ f, (Stream'.take n (primes f)) = (Stream'.take n (primes' m)) :=
   by sorry
+
+def approx : Nat → Stream' Nat → List Nat := Stream'.take
+
+def approxWhile (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
+  match fuel with
+  | Nat.zero => []
+  | Nat.succ m =>
+    match (p (Stream'.head s)) with
+    | true => (Stream'.head s) :: approxWhile m p (Stream'.tail s)
+    | false => []
+
+
+def approxUntil (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
+  match fuel with
+  | Nat.zero => []
+  | Nat.succ m =>
+    match (p (Stream'.head s)) with
+    | true => []
+    | false => (Stream'.head s) :: approxWhile m p (Stream'.tail s)
