@@ -44,7 +44,7 @@ def approxUntil (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
     | true => []
     | false => (Stream'.head s) :: approxWhile m p (Stream'.tail s)
 
-private theorem one (x : Nat)
+private theorem two (x : Nat)
                     (xs : List Nat)
                     (x_in_xs : x ∈ xs)
                     (inc : Pairwise < xs)
