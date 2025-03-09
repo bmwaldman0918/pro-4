@@ -44,13 +44,27 @@ def approxUntil (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
     | false => (Stream'.head s) :: approxWhile m p (Stream'.tail s)
 
 private theorem three (x n : Nat)
-                    (xs : List Nat)
+                    (xs : Stream' Nat)
                     (x_in_xs : x ∈ xs)
-                    (inc : List.Pairwise (·<·) xs)
-  : ∃ f, approx n (listToStream xs) = approxWhile f ((xs.get! n)≥·) (listToStream xs) := by
+                    (inc : Stream'.Pairwise (·<·) xs)
+  : ∃ f, approx (n+1) xs =
+         approxWhile f ((xs.get n)≥·) xs := by
   exists n
-  induction xs with
-  | nil => cases x_in_xs
-  | cons y ys IH =>
-      rcases inc with ⟨a, b⟩
-      sorry
+  sorry
+
+private theorem four (x f : Nat)
+                     (xs : Stream' Nat)
+                     (x_in_xs : x ∈ xs)
+                     (inc : Stream'.Pairwise (·<·) xs)
+  : approxWhile f (x≥·) xs =
+    approxUntil f (x≤·) xs
+  := by sorry
+
+private theorem five (x y f : Nat)
+                     (xs ys : Stream' Nat)
+                     (x_in_xs_minus_ys : x ∈ setDiff f xs ys)
+                     (x_le_y : x < y)
+                     (inc : Stream'.Pairwise (·<·) xs)
+  : approxWhile f (·≤x) (setDiff f xs ys) =
+    approxWhile f (·≤x) (setDiff f xs (listToStream (approxWhile f (·≤y) ys)))
+  := by sorry

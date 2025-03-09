@@ -3,6 +3,9 @@ import Mathlib.Data.Stream.Defs
 def listToStream (l : List Nat) : Stream' Nat :=
   Stream'.appendStream' l (Stream'.pure 0)
 
+def Stream'.Pairwise (R : Nat → Nat → Prop) (s : Stream' Nat) : Prop :=
+  ∀ n, List.Pairwise R (Stream'.take n s)
+
 -- FUEL: infinite generator
 -- L, L': infinite lists
 -- Set difference; or, all elements in L but not in L'.
