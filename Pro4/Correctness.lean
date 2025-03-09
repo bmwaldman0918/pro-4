@@ -35,7 +35,6 @@ def approxWhile (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
     | true => (Stream'.head s) :: approxWhile m p (Stream'.tail s)
     | false => []
 
-
 def approxUntil (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
   match fuel with
   | Nat.zero => []
@@ -44,9 +43,14 @@ def approxUntil (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
     | true => []
     | false => (Stream'.head s) :: approxWhile m p (Stream'.tail s)
 
-private theorem two (x : Nat)
+private theorem three (x n : Nat)
                     (xs : List Nat)
                     (x_in_xs : x ∈ xs)
-                    (inc : Pairwise < xs)
-                : ∀ n, ∃ f, approx n (listToStream xs) = approxWhile f (λ x => (xs.get! n) ≥ x) (listToStream xs)
-  := by sorry
+                    (inc : List.Pairwise (·<·) xs)
+  : ∃ f, approx n (listToStream xs) = approxWhile f ((xs.get! n)≥·) (listToStream xs) := by
+  exists n
+  induction xs with
+  | nil => cases x_in_xs
+  | cons y ys IH =>
+      rcases inc with ⟨a, b⟩
+      sorry
