@@ -1,5 +1,8 @@
 import Mathlib.Data.Stream.Defs
 
+def listToStream (l : List Nat) : Stream' Nat :=
+  Stream'.appendStream' l (Stream'.pure 0)
+
 -- FUEL: infinite generator
 -- L, L': infinite lists
 -- Set difference; or, all elements in L but not in L'.
@@ -70,9 +73,7 @@ def makeP (fuel: Nat) (l : Stream' Nat) : Stream' Nat :=
 -- Create a list of all multiples of the first FUEL
 -- primes (known composites).
 def makeC (fuel: Nat) (l : Stream' Nat) : Stream' Nat :=
-  Stream'.appendStream'
-    (mergeAll (List.map (multiples fuel) (Stream'.take fuel l)))
-    (Stream'.const 0)
+  listToStream (mergeAll (List.map (multiples fuel) (Stream'.take fuel l)))
 
 mutual
   def primes (fuel : Nat) : Stream' Nat :=

@@ -20,7 +20,7 @@ def primesList (fuel : Nat) : List Nat :=
       primesList m
 
 def primes' (fuel: Nat) : Stream' Nat :=
-  Stream'.appendStream' (primesList fuel) (Stream'.const 0)
+  listToStream (primesList fuel)
 
 theorem sieve_correct : ∀ (n m : Nat), ∃ f, (Stream'.take n (primes f)) = (Stream'.take n (primes' m)) :=
   by sorry
@@ -45,8 +45,8 @@ def approxUntil (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
     | false => (Stream'.head s) :: approxWhile m p (Stream'.tail s)
 
 private theorem one (x : Nat)
-                    (xs : Stream' Nat)
+                    (xs : List Nat)
                     (x_in_xs : x ∈ xs)
-                    (inc : Pairwise < l)
-                : ∀ n, ∃ f, approx n xs = approxWhile f (λ x => (xs.get! n) ≥ x) xs
+                    (inc : Pairwise < xs)
+                : ∀ n, ∃ f, approx n (listToStream xs) = approxWhile f (λ x => (xs.get! n) ≥ x) (listToStream xs)
   := by sorry
