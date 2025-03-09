@@ -1,10 +1,10 @@
 import Mathlib.Data.Stream.Defs
 
 def listToStream (l : List Nat) : Stream' Nat :=
-  Stream'.appendStream' l (Stream'.pure 0)
+  (Stream'.pure 0).appendStream' l
 
 def Stream'.Pairwise (R : Nat → Nat → Prop) (s : Stream' Nat) : Prop :=
-  ∀ n, List.Pairwise R (Stream'.take n s)
+  ∀ n, (s.take n).Pairwise R
 
 -- FUEL: infinite generator
 -- L, L': infinite lists
@@ -13,14 +13,14 @@ def setDiff (fuel : Nat) (l l' : Stream' Nat) : Stream' Nat :=
   match fuel with
   | Nat.zero => Stream'.const 0
   | Nat.succ m =>
-    let x := Stream'.head l
-    let xs := Stream'.tail l
+    let x := l.head
+    let xs := l.tail
 
-    let y := Stream'.head l'
-    let ys := Stream'.tail l'
+    let y := l'.head
+    let ys := l'.tail
 
     if x < y
-      then  Stream'.cons x (setDiff m xs l')
+      then  (setDiff m xs l').cons x
     else if x == y
       then setDiff m xs ys
     else -- if x > y
@@ -28,7 +28,7 @@ def setDiff (fuel : Nat) (l l' : Stream' Nat) : Stream' Nat :=
 
 -- The natural numbers starting from 3.
 def natsThree : Stream' Nat :=
-  Stream'.drop 3 Stream'.nats
+  (Stream'.nats).drop 3
 
 -- All multiples of P starting with its square.
 def multiples (fuel: Nat) (p: Nat): List Nat :=
@@ -69,14 +69,14 @@ def mergeAll (l : List (List Nat)) : List Nat :=
 -- Set difference between a list of definite composite numbers
 -- and list of natural numbers (known primes up to FUEL).
 def makeP (fuel: Nat) (l : Stream' Nat) : Stream' Nat :=
-  Stream'.cons 2 (setDiff fuel natsThree l)
+  (setDiff fuel natsThree l).cons 2
 
 -- FUEL: infinite generator
 -- L: infinite list of primes
 -- Create a list of all multiples of the first FUEL
 -- primes (known composites).
 def makeC (fuel: Nat) (l : Stream' Nat) : Stream' Nat :=
-  listToStream (mergeAll (List.map (multiples fuel) (Stream'.take fuel l)))
+  listToStream (mergeAll (List.map (multiples fuel) (l.take fuel)))
 
 mutual
   def primes (fuel : Nat) : Stream' Nat :=
@@ -91,5 +91,5 @@ mutual
 
 end
 
-#eval (Stream'.take 10 (composites 10))
-#eval (Stream'.take 10 (primes 10))
+#eval ((composites 10).take 10)
+#eval ((primes 10).take 10)

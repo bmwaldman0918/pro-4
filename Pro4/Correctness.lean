@@ -31,26 +31,31 @@ def approxWhile (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
   match fuel with
   | Nat.zero => []
   | Nat.succ m =>
-    match (p (Stream'.head s)) with
-    | true => (Stream'.head s) :: approxWhile m p (Stream'.tail s)
+    match (p (s.head)) with
+    | true => (s.head) :: approxWhile m p (s.tail)
     | false => []
 
 def approxUntil (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
   match fuel with
   | Nat.zero => []
   | Nat.succ m =>
-    match (p (Stream'.head s)) with
+    match (p (s.head)) with
     | true => []
-    | false => (Stream'.head s) :: approxWhile m p (Stream'.tail s)
+    | false => (s.head) :: approxWhile m p (s.tail)
 
 private theorem three (x n : Nat)
                     (xs : Stream' Nat)
                     (x_in_xs : x ∈ xs)
-                    (inc : Stream'.Pairwise (·<·) xs)
+                    (inc : xs.Pairwise (·<·))
   : ∃ f, approx (n+1) xs =
          approxWhile f ((xs.get n)≥·) xs := by
-  exists (n+1)
-  sorry
+    exists (n+1)
+    induction n with
+    | zero => unfold approx
+              unfold approxWhile
+              sorry
+    | succ m => sorry
+
 
 private theorem four (x f : Nat)
                      (xs : Stream' Nat)
