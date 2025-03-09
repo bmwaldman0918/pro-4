@@ -49,7 +49,7 @@ private theorem three (x n : Nat)
                     (inc : Stream'.Pairwise (·<·) xs)
   : ∃ f, approx (n+1) xs =
          approxWhile f ((xs.get n)≥·) xs := by
-  exists n
+  exists (n+1)
   sorry
 
 private theorem four (x f : Nat)
