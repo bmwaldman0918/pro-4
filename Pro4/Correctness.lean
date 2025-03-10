@@ -65,11 +65,22 @@ private theorem approx_zero_is_empty
 private theorem three (x n : Nat)
                       (xs : Stream' Nat)
                       (x_in_xs : x ∈ xs)
-                      (inc : ∀ i : Nat, i < j → xs.get (i) < xs.get (j))
+                      (inc : ∀ i j : Nat, i < j ↔ xs.get (i) < xs.get (j))
                       -- (inc : xs.Pairwise (·<·))
   : ∃ f, approx (Nat.succ n) xs =
          approxWhile f ((xs.get n)≥·) xs := by
     exists (Nat.succ n)
+
+    induction (Nat.succ n) with
+    | zero => rw [approxWhile_zero_is_empty, approx_zero_is_empty]
+    | succ m IH =>
+      unfold approx; unfold Stream'.take
+      unfold approxWhile; simp
+      have H : decide (xs.head ≤ xs.get n) = true := by
+        skip -- shelved for now
+      rw [H]; simp
+      unfold approx at IH; simp at IH
+
     induction n with
     | zero => unfold approx
               unfold approxWhile
@@ -77,9 +88,15 @@ private theorem three (x n : Nat)
               rw [approxWhile_zero_is_empty]
               rfl
     | succ m IH =>
-      unfold approx
-      unfold approxWhile
-      simp
+      unfold approx; unfold approxWhile; simp
+      have H : decide (xs.head ≤ xs.get (m+1)) = true := by
+        skip -- shelved for now
+      rw [H]; simp
+      unfold approx at IH; simp at IH
+      unfold Stream'.take
+
+
+
 
 
 
