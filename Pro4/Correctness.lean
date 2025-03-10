@@ -1,5 +1,6 @@
 import Mathlib.Data.Stream.Defs
 import Mathlib.Data.Nat.Prime.Defs
+import Mathlib.Order.Basic
 import Pro4.Sieve
 
 -- proving the correctness of the sieve
@@ -64,19 +65,23 @@ private theorem approx_zero_is_empty
 private theorem three (x n : Nat)
                       (xs : Stream' Nat)
                       (x_in_xs : x ∈ xs)
-                      (inc : xs.Pairwise (·<·))
+                      (inc : ∀ i : Nat, i < j → xs.get (i) < xs.get (j))
+                      -- (inc : xs.Pairwise (·<·))
   : ∃ f, approx (Nat.succ n) xs =
          approxWhile f ((xs.get n)≥·) xs := by
     exists (Nat.succ n)
     induction n with
     | zero => unfold approx
               unfold approxWhile
-              cases (inc 2) with
-              | cons a as => simp
-                             rw [approxWhile_zero_is_empty]
-                             rfl
-    | succ m IH => simp
-                   sorry
+              simp
+              rw [approxWhile_zero_is_empty]
+              rfl
+    | succ m IH =>
+      unfold approx
+      unfold approxWhile
+      simp
+
+
 
 
 private theorem four (x f : Nat)
