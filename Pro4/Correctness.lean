@@ -199,9 +199,10 @@ private theorem five (x y f : Nat)
   : approxWhile f (·≤x) (setDiff f xs ys) =
     approxWhile f (·≤x) (setDiff f xs (listToStream (approxWhile f (·≤y) ys)))
   := by
+  revert x y xs ys
   induction f with
   | zero =>
     simp [approxWhile_zero_is_empty]
-  | succ m IH =>
-    unfold approxWhile
+  | succ f IH =>
+    intros x y xs ys x_in_xs_minus_ys x_le_y inc
     sorry
