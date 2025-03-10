@@ -65,14 +65,13 @@ private theorem approx_zero_is_empty
   unfold approx
   rfl
 
-private theorem three (x n : Nat)
+private theorem three (n : Nat)
                       (xs : Stream' Nat)
-                      -- (x_in_xs : x ∈ xs)
   : (∀ i j : Nat, i < j ↔ xs.get (i) < xs.get (j)) →
     ∃ f, approx (Nat.succ n) xs = approxWhile f ((xs.get n)≥·) xs := by
-    intros
-    exists (Nat.succ n)
-    revert xs
+
+    intros; exists (Nat.succ n); revert xs
+
     induction n with
     | zero =>
       intros; unfold approx; rw [approx_zero_is_empty]
@@ -81,27 +80,23 @@ private theorem three (x n : Nat)
       intros xst inc
       simp; simp at IH; unfold approx; unfold approxWhile
       have H1 : decide (xst.head ≤ xst.get (m+1)) = true := by
-        unfold Stream'.head
-        apply decide_eq_true
+        unfold Stream'.head; apply decide_eq_true
         rw [le_iff_eq_or_lt]; right
         rw [← inc]; simp
-      rw [H1]; simp;
+      rw [H1]; simp
       have H2 : (xst.tail).get m = xst.get (m+1) := by
         unfold Stream'.tail; unfold Stream'.get; simp
       apply IH
-      intros i j
-      apply Iff.intro
+
+      intros i j; apply Iff.intro
+
       intro i_le_j
-      unfold Stream'.get
-      unfold Stream'.tail
-      rw [← inc]
-      simp
-      assumption
+      unfold Stream'.get; unfold Stream'.tail
+      rw [← inc]; simp; assumption
+
       intro h1
-      unfold Stream'.get at h1
-      unfold Stream'.tail at h1
-      rw [← inc] at h1
-      simp at h1
+      unfold Stream'.get at h1; unfold Stream'.tail at h1
+      rw [← inc] at h1; simp at h1
       assumption
 
 private theorem four (x f : Nat)
