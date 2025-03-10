@@ -26,12 +26,10 @@ def primes' (fuel: Nat) : Stream' Nat :=
 theorem sieve_correct : ∀ (n m : Nat), ∃ f, (Stream'.take n (primes f)) = (Stream'.take n (primes' m)) :=
   by sorry
 
-def approx : Nat → Stream' Nat → List Nat := Stream'.take
-
-def approx' (fuel : Nat) (s : Stream' Nat) : List Nat :=
+def approx (fuel : Nat) (s : Stream' Nat) : List Nat :=
   match fuel with
   | Nat.zero => []
-  | Nat.succ m => s.head :: approx' m s.tail
+  | Nat.succ m => s.head :: approx m s.tail
 
 def approxWhile (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
   match fuel with
@@ -67,32 +65,29 @@ private theorem approx_zero_is_empty
   unfold approx
   rfl
 
-private theorem approx'_zero_is_empty
-  : ∀ s, approx' 0 s = [] := by
-  intro
-  unfold approx'
-  rfl
-
 private theorem three (x n : Nat)
                       (xs : Stream' Nat)
                       -- (x_in_xs : x ∈ xs)
   : (∀ i j : Nat, i < j ↔ xs.get (i) < xs.get (j)) →
-    ∃ f, approx' (Nat.succ n) xs = approxWhile f ((xs.get n)≥·) xs := by
+    ∃ f, approx (Nat.succ n) xs = approxWhile f ((xs.get n)≥·) xs := by
     intros
     exists (Nat.succ n)
     revert xs
     induction n with
     | zero =>
-      intros; unfold approx'; rw [approx'_zero_is_empty]
+      intros; unfold approx; rw [approx_zero_is_empty]
       unfold approxWhile; simp; rw [approxWhile_zero_is_empty]
     | succ m IH =>
       intros xst inc
-      simp; simp at IH; unfold approx'; unfold approxWhile
-      have H : decide (xst.head ≤ xst.get (m+1)) = true := by
-        skip -- shelved for now
-      rw [H]; simp;
-      have H1 : (xst.tail).get m = xst.get (m+1) := by
-        skip -- shelved for now
+      simp; simp at IH; unfold approx; unfold approxWhile
+      have H1 : decide (xst.head ≤ xst.get (m+1)) = true := by
+        unfold Stream'.head
+        apply decide_eq_true
+        rw [le_iff_eq_or_lt]; right
+        rw [← inc]; simp
+      rw [H1]; simp;
+      have H2 : (xst.tail).get m = xst.get (m+1) := by
+        unfold Stream'.tail; unfold Stream'.get; simp
       apply IH
       intros i j
       apply Iff.intro
@@ -108,54 +103,6 @@ private theorem three (x n : Nat)
       rw [← inc] at h1
       simp at h1
       assumption
-
-
-
-
-
-
-
-    -- induction (Nat.succ n) with
-    -- | zero =>
-    --   intros; rw [approx'_zero_is_empty]
-    -- | succ m IH =>
-    --   intros xst x_in_xst inct
-    --   unfold approxWhile; simp
-    --   have H : decide (xst.head ≤ xst.get n) = true := by
-    --     skip -- shelved for now
-    --   rw [H]; simp
-    --   unfold approx'
-    --   rewrite [IH]
-
-
-
-    --   unfold approx; unfold Stream'.take
-    --   unfold approxWhile; simp
-    --   have H : decide (xs.head ≤ xs.get n) = true := by
-    --     skip -- shelved for now
-    --   rw [H]; simp
-    --   unfold approx at IH; simp at IH
-
-
-    -- induction n with
-    -- | zero => unfold approx
-    --           unfold approxWhile
-    --           simp
-    --           rw [approxWhile_zero_is_empty]
-    --           rfl
-    -- | succ m IH =>
-    --   unfold approx; unfold approxWhile; simp
-    --   have H : decide (xs.head ≤ xs.get (m+1)) = true := by
-    --     skip -- shelved for now
-    --   rw [H]; simp
-    --   unfold approx at IH; simp at IH
-    --   unfold Stream'.take
-
-
-
-
-
-
 
 private theorem four (x f : Nat)
                      (xs : Stream' Nat)
