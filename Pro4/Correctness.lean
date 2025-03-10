@@ -201,7 +201,13 @@ private theorem five (x y f : Nat)
                      (xs ys : Stream' Nat)
                      (x_in_xs_minus_ys : x ∈ setDiff f xs ys)
                      (x_le_y : x < y)
-                     (inc : Stream'.Pairwise (·<·) xs)
+                     (inc : ∀ i j : Nat, i < j ↔ xs.get (i) < xs.get (j))
   : approxWhile f (·≤x) (setDiff f xs ys) =
-    approxWhile f (·≤x) (setDiff f xs (approxWhile f (·≤y) ys))
-  := by sorry
+    approxWhile f (·≤x) (setDiff f xs (listToStream (approxWhile f (·≤y) ys)))
+  := by
+  induction f with
+  | zero =>
+    simp [approxWhile_zero_is_empty]
+  | succ m IH =>
+    unfold approxWhile
+    sorry
