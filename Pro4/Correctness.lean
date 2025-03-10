@@ -28,30 +28,35 @@ theorem sieve_correct : ∀ (n m : Nat), ∃ f, (Stream'.take n (primes f)) = (S
 
 def approx : Nat → Stream' Nat → List Nat := Stream'.take
 
-def approxWhile (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : Stream' Nat :=
+def approx' (fuel : Nat) (s : Stream' Nat) : List Nat :=
   match fuel with
-  | Nat.zero => Stream'.const 0
-  | Nat.succ m =>
-    match (p (s.head)) with
-    | true => Stream'.cons (s.head) (approxWhile m p (s.tail))
-    | false => Stream'.const 0
+  | Nat.zero => []
+  | Nat.succ m => s.head :: approx' m s.tail
 
-def approxUntil (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : Stream' Nat :=
+def approxWhile (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
   match fuel with
-  | Nat.zero => Stream'.const 0
+  | Nat.zero => []
   | Nat.succ m =>
     match (p (s.head)) with
-    | true => Stream'.cons s.head (Stream'.const 0)
-    | false => Stream'.cons (s.head) (approxUntil m p (s.tail))
+    | true => s.head :: approxWhile m p (s.tail)
+    | false => []
+
+def approxUntil (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
+  match fuel with
+  | Nat.zero => []
+  | Nat.succ m =>
+    match (p (s.head)) with
+    | true => s.head :: []
+    | false => s.head :: approxUntil m p (s.tail)
 
 private theorem approxWhile_zero_is_empty
-  : ∀ s f, approxWhile 0 f s = Stream'.const 0 := by
+  : ∀ s f, approxWhile 0 f s = []:= by
   intros
   unfold approxWhile
   rfl
 
 private theorem approxUntil_zero_is_empty
-  : ∀ s f, approxUntil 0 f s = Stream'.const 0 := by
+  : ∀ s f, approxUntil 0 f s = [] := by
   intros
   unfold approxUntil
   rfl
@@ -62,38 +67,75 @@ private theorem approx_zero_is_empty
   unfold approx
   rfl
 
+private theorem approx'_zero_is_empty
+  : ∀ s, approx' 0 s = [] := by
+  intro
+  unfold approx'
+  rfl
+
 private theorem three (x n : Nat)
                       (xs : Stream' Nat)
-                      (x_in_xs : x ∈ xs)
-                      (inc : ∀ i j : Nat, i < j ↔ xs.get (i) < xs.get (j))
-                      -- (inc : xs.Pairwise (·<·))
-  : ∃ f, approx (Nat.succ n) xs =
-         (approxWhile f ((xs.get n)≥·) xs).take (Nat.succ n) := by
+                      -- (x_in_xs : x ∈ xs)
+  : (∀ i j : Nat, i < j ↔ xs.get (i) < xs.get (j)) →
+    ∃ f, approx' (Nat.succ n) xs = approxWhile f ((xs.get n)≥·) xs := by
+    intros
     exists (Nat.succ n)
-
-    induction (Nat.succ n) with
-    | zero => rw [approxWhile_zero_is_empty, approx_zero_is_empty]
-    | succ m IH =>
-      unfold approx; unfold Stream'.take
-      unfold approxWhile; simp
-      have H : decide (xs.head ≤ xs.get n) = true := by
-        skip -- shelved for now
-      rw [H]; simp
-      unfold approx at IH; simp at IH
-
+    revert xs
     induction n with
-    | zero => unfold approx
-              unfold approxWhile
-              simp
-              rw [approxWhile_zero_is_empty]
-              rfl
+    | zero =>
+      intros; unfold approx'; rw [approx'_zero_is_empty]
+      unfold approxWhile; simp; rw [approxWhile_zero_is_empty]
     | succ m IH =>
-      unfold approx; unfold approxWhile; simp
-      have H : decide (xs.head ≤ xs.get (m+1)) = true := by
+      intros xst inc
+      simp; simp at IH; unfold approx'; unfold approxWhile
+      have H : decide (xst.head ≤ xst.get (m+1)) = true := by
         skip -- shelved for now
-      rw [H]; simp
-      unfold approx at IH; simp at IH
-      unfold Stream'.take
+      rw [H]; simp;
+      have H1 : (xst.tail).get m = xst.get (m+1) := by
+        skip -- shelved for now
+      apply IH
+
+
+
+
+
+
+
+    -- induction (Nat.succ n) with
+    -- | zero =>
+    --   intros; rw [approx'_zero_is_empty]
+    -- | succ m IH =>
+    --   intros xst x_in_xst inct
+    --   unfold approxWhile; simp
+    --   have H : decide (xst.head ≤ xst.get n) = true := by
+    --     skip -- shelved for now
+    --   rw [H]; simp
+    --   unfold approx'
+    --   rewrite [IH]
+
+
+
+    --   unfold approx; unfold Stream'.take
+    --   unfold approxWhile; simp
+    --   have H : decide (xs.head ≤ xs.get n) = true := by
+    --     skip -- shelved for now
+    --   rw [H]; simp
+    --   unfold approx at IH; simp at IH
+
+
+    -- induction n with
+    -- | zero => unfold approx
+    --           unfold approxWhile
+    --           simp
+    --           rw [approxWhile_zero_is_empty]
+    --           rfl
+    -- | succ m IH =>
+    --   unfold approx; unfold approxWhile; simp
+    --   have H : decide (xs.head ≤ xs.get (m+1)) = true := by
+    --     skip -- shelved for now
+    --   rw [H]; simp
+    --   unfold approx at IH; simp at IH
+    --   unfold Stream'.take
 
 
 
