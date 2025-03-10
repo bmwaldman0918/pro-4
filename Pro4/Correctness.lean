@@ -94,6 +94,20 @@ private theorem three (x n : Nat)
       have H1 : (xst.tail).get m = xst.get (m+1) := by
         skip -- shelved for now
       apply IH
+      intros i j
+      apply Iff.intro
+      intro i_le_j
+      unfold Stream'.get
+      unfold Stream'.tail
+      rw [← inc]
+      simp
+      assumption
+      intro h1
+      unfold Stream'.get at h1
+      unfold Stream'.tail at h1
+      rw [← inc] at h1
+      simp at h1
+      assumption
 
 
 
