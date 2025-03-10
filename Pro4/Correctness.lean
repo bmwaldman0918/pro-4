@@ -43,18 +43,40 @@ def approxUntil (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
     | true => []
     | false => (s.head) :: approxWhile m p (s.tail)
 
+private theorem approxWhile_zero_is_empty
+  : ∀ s f, approxWhile 0 f s = [] := by
+  intros
+  unfold approxWhile
+  rfl
+
+private theorem approxUntil_zero_is_empty
+  : ∀ s f, approxUntil 0 f s = [] := by
+  intros
+  unfold approxUntil
+  rfl
+
+private theorem approx_zero_is_empty
+  : ∀ s, approx 0 s = [] := by
+  intro
+  unfold approx
+  rfl
+
 private theorem three (x n : Nat)
-                    (xs : Stream' Nat)
-                    (x_in_xs : x ∈ xs)
-                    (inc : xs.Pairwise (·<·))
-  : ∃ f, approx (n+1) xs =
+                      (xs : Stream' Nat)
+                      (x_in_xs : x ∈ xs)
+                      (inc : xs.Pairwise (·<·))
+  : ∃ f, approx (Nat.succ n) xs =
          approxWhile f ((xs.get n)≥·) xs := by
-    exists (n+1)
+    exists (Nat.succ n)
     induction n with
     | zero => unfold approx
               unfold approxWhile
-              sorry
-    | succ m => sorry
+              cases (inc 2) with
+              | cons a as => simp
+                             rw [approxWhile_zero_is_empty]
+                             rfl
+    | succ m IH => simp
+                   sorry
 
 
 private theorem four (x f : Nat)
