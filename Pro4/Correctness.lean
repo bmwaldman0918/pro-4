@@ -85,7 +85,20 @@ private theorem four (x f : Nat)
                      (inc : Stream'.Pairwise (·<·) xs)
   : approxWhile f (x≥·) xs =
     approxUntil f (x≤·) xs
-  := by sorry
+  := by
+  induction f with
+  | zero =>
+    unfold approxWhile
+    unfold approxUntil
+    simp
+  | succ m ih =>
+    unfold approxWhile
+    cases (inc 2) with
+    | cons a as =>
+      simp
+
+    unfold approxUntil
+
 
 private theorem five (x y f : Nat)
                      (xs ys : Stream' Nat)
