@@ -109,88 +109,87 @@ private theorem four (x f : Nat)
   revert xs
   induction f with
   | zero =>
-    unfold approxWhile
-    unfold approxUntil
-    simp
+    simp [approxUntil, approxWhile]
   | succ m ih =>
     intros xs x_in_xs inc
     match xs.head.decLe x with
-    | isFalse f => match x.decLe xs.head with
-                   | isFalse f' => exfalso
-                                   match x.le_or_le (xs.head) with
-                                   | (Or.inr r) => apply f
-                                                   assumption
-                                   | (Or.inl l) => apply f'
-                                                   assumption
-                   | isTrue t' => have h1 := (Iff.mp le_iff_lt_or_eq) t'
-                                  cases h1 with
-                                  | inl l => cases x_in_xs with
-                                             | intro idx hs =>
-                                               cases idx with
-                                               | zero =>
-                                                 unfold Stream'.head at *
-                                                 exfalso
-                                                 apply f
-                                                 simp [hs]
-                                               | succ m =>
-                                                 rw [hs] at l
-                                                 unfold Stream'.head at *
-                                                 have h2 := Iff.mpr (inc (m + 1) 0) l
-                                                 exfalso
-                                                 apply Nat.not_lt_zero
-                                                 assumption
-                                  | inr r => exfalso
-                                             apply f
-                                             simp [r]
-    | isTrue t  => match x.decLe xs.head with
-                   | isFalse f' => have ht := decide_eq_true t
-                                   have hf' := decide_eq_false f'
-                                   unfold approxWhile
-                                   unfold approxUntil
-                                   simp [ht, hf']
-                                   rw [ih]
-                                   cases x_in_xs with
-                                   | intro idx hs =>
-                                     cases idx with
-                                     | zero =>
-                                      exfalso
-                                      apply f'
-                                      unfold Stream'.head
-                                      rw [hs]
-                                     | succ m =>
-                                      unfold Stream'.tail
-                                      exists m
-                                   unfold Stream'.get
-                                   intros i j
-                                   constructor
-                                   intros i_le_j
-                                   unfold Stream'.tail
-                                   rw [← inc]
-                                   simp
-                                   assumption
-                                   unfold Stream'.tail
-                                   intro h
-                                   rw [← inc] at h
-                                   simp at h
-                                   assumption
-                   | isTrue t'  => have ht := decide_eq_true t
-                                   have ht' := decide_eq_true t'
-                                   have h := ge_antisymm t t'
-                                   have h1 := inc 0 1
-                                   simp at h1
-                                   unfold approxUntil
-                                   unfold approxWhile
-                                   simp [ht, ht', h, h1]
-                                   unfold approxWhile
-                                   unfold Stream'.head
-                                   have h2 : xs.get 1 = xs.tail.get 0 := rfl
-                                   rw [← h2]
-                                   have := not_le_of_lt h1
-                                   have h4 := decide_eq_false this
-                                   simp [h4]
-                                   cases m with
-                                   | zero => simp
-                                   | succ m => simp
+    | isFalse f =>
+      match x.decLe xs.head with
+      | isFalse f' =>
+        exfalso
+        match x.le_or_le (xs.head) with
+        | (Or.inr r) =>
+          apply f
+          assumption
+        | (Or.inl l) =>
+          apply f'
+          assumption
+      | isTrue t' =>
+        have h1 := (Iff.mp le_iff_lt_or_eq) t'
+        cases h1 with
+        | inl l =>
+          cases x_in_xs with
+          | intro idx hs =>
+            cases idx with
+            | zero =>
+              unfold Stream'.head at *
+              exfalso
+              apply f
+              simp [hs]
+            | succ m =>
+              rw [hs] at l
+              unfold Stream'.head at *
+              have h2 := Iff.mpr (inc (m + 1) 0) l
+              exfalso
+              apply Nat.not_lt_zero
+              assumption
+        | inr r =>
+          exfalso
+          apply f
+          simp [r]
+    | isTrue t  =>
+      match x.decLe xs.head with
+      | isFalse f' =>
+        have ht := decide_eq_true t
+        have hf' := decide_eq_false f'
+        simp [approxUntil, approxWhile, ht, hf']
+        rw [ih]
+        cases x_in_xs with
+        | intro idx hs =>
+          cases idx with
+          | zero =>
+            exfalso
+            apply f'
+            simp [Stream'.head, hs]
+          | succ m =>
+            unfold Stream'.tail
+            exists m
+        intros i j
+        unfold Stream'.get
+        unfold Stream'.tail
+        constructor
+        . intros i_le_j
+          rw [← inc]
+          simp
+          assumption
+        . intro h
+          rw [← inc] at h
+          simp at h
+          assumption
+      | isTrue t'  =>
+        have ht := decide_eq_true t
+        have ht' := decide_eq_true t'
+        have h := ge_antisymm t t'
+        have h1 := inc 0 1
+        simp at h1
+        simp [approxUntil, approxWhile, ht, ht', h, h1]
+        have h2 : xs.tail.head = xs.get 1 := rfl
+        have h3 := decide_eq_false (not_le_of_lt h1)
+        rw [← h2] at h3
+        simp [approxWhile, Stream'.head]
+        cases m;
+          simp [h3, approxWhile];
+          simp [h3, approxWhile]
 
 private theorem five (x y f : Nat)
                      (xs ys : Stream' Nat)
