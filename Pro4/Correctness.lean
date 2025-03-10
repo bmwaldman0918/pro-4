@@ -235,6 +235,7 @@ private theorem four (x f : Nat)
                                    cases m with
                                    | zero => simp
                                    | succ m => simp
+
 private theorem five (x y f : Nat)
                      (xs ys : Stream' Nat)
                      (x_in_xs_minus_ys : x ∈ setDiff f xs ys)
