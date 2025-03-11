@@ -23,10 +23,12 @@ def primesList (fuel : Nat) : List Nat :=
 def primes' (fuel: Nat) : Stream' Nat :=
   listToStream (primesList fuel)
 
-theorem sieve_correct : ∀ (n m : Nat), ∃ f, (Stream'.take n (primes f)) = (Stream'.take n (primes' m)) :=
+theorem sieve_correct :
+  ∀ (n m : Nat), ∃ f,
+    (Stream'.take n (primes f)) = (Stream'.take n (primes' m)) :=
   by sorry
 
-def approx (fuel : Nat) (s : Stream' Nat) : List Nat :=
+def approx (fuel : Nat) (s : Stream' X) : List X :=
   match fuel with
   | Nat.zero => []
   | Nat.succ m => s.head :: approx m s.tail
@@ -60,7 +62,7 @@ private theorem approxUntil_zero_is_empty
   rfl
 
 private theorem approx_zero_is_empty
-  : ∀ s, approx 0 s = [] := by
+  : ∀ s : Stream' X, approx 0 s = [] := by
   intro
   unfold approx
   rfl
@@ -206,3 +208,48 @@ private theorem five (x y f : Nat)
   | succ f IH =>
     intros x y xs ys x_in_xs_minus_ys x_le_y inc
     sorry
+
+-- true if head of list l is less than l', incl. empty list
+-- false if head of list l' is greater than or equal to l, incl. empty list
+private def inc_list_heads (l l' : List Nat) : Prop :=
+  match l with
+  | [] => True
+  | x :: _ =>
+    match l' with
+    | [] => False
+    | y :: _ => if x < y then True else False
+
+-- For n ≥ 0 and partial or infinite strictly increasing list
+-- xss of properly infinite, strictly increasing lists, defined at least as far as xss !! n,
+-- mergeAll (approx (n + 1) xss) = approxUntil (≤ head (xss !! n)) (mergeAll xss)
+private theorem six (x y f n : Nat)
+                    (xss : Stream' (List Nat))
+                    (xss_inc : ∀ xs ∈ xss, List.Pairwise inc_list_heads (Stream'.take n xss))
+                    (xs_inc : ∀ xs ∈ xss, List.Pairwise (·<·) xs)
+  : (n ≥ 0) → (∀ m ≤ n, xss.get m ≠ []) →
+    ∃ f, mergeAll (approx (n+1) xss)
+    = approxUntil f (·≥ (xss.get n).get! 0) (listToStream (mergeAll (Stream'.take f xss))) := by
+    intros pos_n xss_def_to_n
+    exists (n+1)
+    induction n with
+    | zero => unfold approx
+              rw [approx_zero_is_empty]
+              have h : xss.head ≠ List.nil := by
+                apply xss_def_to_n; rfl
+              cases h1 : xss.head with
+              | nil => sorry -- this should be discriminate on h and h1 but idk
+              | cons x xs =>
+                intros
+                simp [mergeAll]; simp [xmerge]; -- huh????
+                simp [approxUntil]; simp_all;
+                split
+                unfold listToStream; unfold Stream'.head;
+                unfold mergeAll
+                have h2 : Stream'.take 1 xss = List.cons (List.cons x xs) [] := by
+                  unfold Stream'.take; simp; unfold Stream'.take; simp; apply h1
+                cases h3 : Stream'.take 1 xss with
+                | nil => sorry -- discriminate on h2 and h3
+                | cons a as =>
+                  sorry
+                sorry
+    | succ => sorry
