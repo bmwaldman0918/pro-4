@@ -52,15 +52,56 @@ def approxUntil (p : Nat → Bool) (s : InfiniteList Nat) : InfiniteList Nat :=
       else .bot
   | _ => s
 
-def leq (l : InfiniteList Nat) (idx : Nat) : Nat → Bool :=
-  match l.get idx with
+def leq (idx : Option Nat) : Nat → Bool :=
+  match idx with
   | none => λ _ => true
   | some x => λ n => n ≤ x
 
-def geq (l : InfiniteList Nat) (idx : Nat) : Nat → Bool :=
-  match l.get idx with
+def geq (idx : Option Nat) : Nat → Bool :=
+  match idx with
   | none => λ _ => true
   | some x => λ n => n ≥ x
+
+private theorem not_in_inc (x x' : Nat) (l : InfiniteList Nat) :
+  x < x' → increasing (cons x' l) → ¬ mem x (cons x' l) :=
+  by
+  revert x x'
+  induction l with
+  | bot =>
+    intro x x' x_le_x' inc elem
+    unfold mem at elem
+    match elem with
+    | Or.inl h =>
+      apply Nat.ne_of_lt'
+      . assumption
+      . assumption
+    | Or.inr h =>
+      cases h
+  | nil =>
+    intro x x' x_le_x' inc elem
+    unfold mem at elem
+    match elem with
+    | Or.inl h =>
+      apply Nat.ne_of_lt'
+      . assumption
+      . assumption
+    | Or.inr h =>
+      cases h
+  | cons y ys IH =>
+    intro x x' x_le_x' inc elem
+    unfold mem at elem
+    match elem with
+    | Or.inl h =>
+      apply Nat.ne_of_lt'
+      . assumption
+      . assumption
+    | Or.inr h =>
+      apply IH x y
+      apply Nat.lt_trans
+      . assumption
+      . exact inc.left
+      . exact inc.right
+      . assumption
 
 private theorem three (n : Nat)
                       (xs : InfiniteList Nat)
@@ -78,17 +119,26 @@ private theorem three (n : Nat)
       | none => simp; sorry
       | some y => sorry
 
-private theorem four (x f : Nat)
+private theorem four (x : Nat)
                      (xs : InfiniteList Nat)
                      (x_in_xs : mem x xs)
                      (inc : increasing xs)
   : approxWhile (leq xs x) xs =
     approxUntil (geq xs x) xs
   := by
+    revert x
     induction xs with
     | bot => simp [approxWhile, approxUntil]
     | nil => simp [approxWhile, approxUntil]
-    | cons x xs => sorry
+    | cons x' xs IH =>
+      simp only [approxWhile, approxUntil, leq, geq]
+      intro x mem
+      generalize H : (cons x' xs).get x = h
+      cases h with
+      | none =>
+        simp only [get]
+        sorry
+      | some y => sorry
 
 private theorem five (x y f : Nat)
                      (xs ys : InfiniteList Nat) :

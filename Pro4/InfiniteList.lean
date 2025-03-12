@@ -36,5 +36,5 @@ def InfiniteList.get (idx : Nat) (l : InfiniteList Nat) : Option Nat :=
 
 def mem (i : Nat) (l : InfiniteList Nat) : Prop :=
   match l with
-  | .cons x xs => i == x ∨ mem i xs
+  | .cons x xs => x = i ∨ mem i xs
   | _ => False
