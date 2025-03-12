@@ -49,7 +49,7 @@ def approxUntil (p : Nat → Bool) (s : InfiniteList Nat) : InfiniteList Nat :=
   | .cons x xs =>
     if not (p x)
       then .cons x (approxUntil p xs)
-      else .bot
+      else .cons x .bot
   | _ => s
 
 def leq (idx : Option Nat) : Nat → Bool :=
@@ -123,21 +123,19 @@ private theorem four (x : Nat)
                      (xs : InfiniteList Nat)
                      (x_in_xs : mem x xs)
                      (inc : increasing xs)
-  : approxWhile (leq xs x) xs =
-    approxUntil (geq xs x) xs
+  : approxWhile (leq (xs.get x)) xs =
+    approxUntil (geq (xs.get x)) xs
   := by
-    revert x
+    generalize H : xs.get x = h
     induction xs with
     | bot => simp [approxWhile, approxUntil]
     | nil => simp [approxWhile, approxUntil]
     | cons x' xs IH =>
-      simp only [approxWhile, approxUntil, leq, geq]
-      intro x mem
-      generalize H : (cons x' xs).get x = h
+      simp only [approxWhile, approxUntil]
       cases h with
       | none =>
-        simp only [get]
-        sorry
+        rw [IH]
+        simp [leq, geq]
       | some y => sorry
 
 private theorem five (x y f : Nat)
@@ -147,8 +145,8 @@ private theorem five (x y f : Nat)
                      x < y →
                      increasing xs →
                      increasing ys →
-    approxWhile (leq xs x) (setDiff f' xs ys) =
-    approxWhile (leq xs x) (setDiff f' xs (approxWhile (leq ys y) ys))
+    approxWhile (leq (xs.get x)) (setDiff f' xs ys) =
+    approxWhile (leq (xs.get x)) (setDiff f' xs (approxWhile (leq ys y) ys))
   := by
    intros mem_y_ys mem_x_setdiff x_le_y inc_xs inc_ys
    sorry
