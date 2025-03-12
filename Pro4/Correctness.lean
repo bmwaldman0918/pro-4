@@ -1,7 +1,7 @@
-import Mathlib.Data.Stream.Defs
 import Mathlib.Data.Nat.Prime.Defs
-import Mathlib.Order.Basic
 import Pro4.Sieve
+import Pro4.InfiniteList
+open InfiniteList
 
 -- proving the correctness of the sieve
 -- take lemma -- infinite lists are equal if every shared prefix is equal
@@ -11,198 +11,94 @@ import Pro4.Sieve
 -- FUEL: upper limit non-inclusive of list of all primes
 -- e.g. fuel = 10, primes = [2, 3, 5, 7]
 -- e.g. fuel = 50, primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]
-def primesList (fuel : Nat) : List Nat :=
-  match fuel with
-  | Nat.zero => []
-  | Nat.succ m =>
-    if (Nat.Prime m)
-      then primesList m ++ [m]
-    else
-      primesList m
+def primes' (fuel : Nat) : InfiniteList Nat :=
+  let rec primeHelper (fuel next : Nat) : InfiniteList Nat :=
+    match fuel with
+    | .zero => .bot
+    | .succ m =>
+      if Nat.Prime next
+        then .cons next (primeHelper m (next + 1))
+        else (primeHelper m (next + 1))
+  primeHelper fuel 0
 
-def primes' (fuel: Nat) : Stream' Nat :=
-  listToStream (primesList fuel)
+#eval primes' 100
 
-theorem sieve_correct : ∀ (n m : Nat), ∃ f, (Stream'.take n (primes f)) = (Stream'.take n (primes' m)) :=
+theorem sieve_correct : ∀ (n m : Nat), ∃ f, (take (primes f) n) = (take (primes' m) n) :=
   by sorry
 
-def approx (fuel : Nat) (s : Stream' Nat) : List Nat :=
-  match fuel with
-  | Nat.zero => []
-  | Nat.succ m => s.head :: approx m s.tail
+def approx (n : Nat) (s : InfiniteList Nat) : InfiniteList Nat :=
+  match s with
+  | .bot => .bot
+  | .nil => .nil
+  | .cons x xs =>
+    match n with
+    | .zero => .bot
+    | .succ n =>
+      .cons x (approx n xs)
 
-def approxWhile (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
-  match fuel with
-  | Nat.zero => []
-  | Nat.succ m =>
-    match (p (s.head)) with
-    | true => s.head :: approxWhile m p (s.tail)
-    | false => []
+def approxWhile (p : Nat → Bool) (s : InfiniteList Nat) : InfiniteList Nat :=
+  match s with
+  | .cons x xs =>
+    if p x
+      then .cons x (approxWhile p xs)
+      else .bot
+  | _ => s
 
-def approxUntil (fuel : Nat) (p : Nat → Bool) (s : Stream' Nat) : List Nat :=
-  match fuel with
-  | Nat.zero => []
-  | Nat.succ m =>
-    match (p (s.head)) with
-    | true => s.head :: []
-    | false => s.head :: approxUntil m p (s.tail)
+def approxUntil (p : Nat → Bool) (s : InfiniteList Nat) : InfiniteList Nat :=
+  match s with
+  | .cons x xs =>
+    if not (p x)
+      then .cons x (approxUntil p xs)
+      else .bot
+  | _ => s
 
-private theorem approxWhile_zero_is_empty
-  : ∀ s f, approxWhile 0 f s = []:= by
-  intros
-  unfold approxWhile
-  rfl
+def leq (l : InfiniteList Nat) (idx : Nat) : Nat → Bool :=
+  match l.get idx with
+  | none => λ _ => true
+  | some x => λ n => n ≤ x
 
-private theorem approxUntil_zero_is_empty
-  : ∀ s f, approxUntil 0 f s = [] := by
-  intros
-  unfold approxUntil
-  rfl
-
-private theorem approx_zero_is_empty
-  : ∀ s, approx 0 s = [] := by
-  intro
-  unfold approx
-  rfl
+def geq (l : InfiniteList Nat) (idx : Nat) : Nat → Bool :=
+  match l.get idx with
+  | none => λ _ => true
+  | some x => λ n => n ≥ x
 
 private theorem three (n : Nat)
-                      (xs : Stream' Nat)
-  : (∀ i j : Nat, i < j ↔ xs.get (i) < xs.get (j)) →
-    ∃ f, approx (Nat.succ n) xs = approxWhile f ((xs.get n)≥·) xs := by
+                      (xs : InfiniteList Nat)
+  : (increasing xs) → approx n xs = approxWhile (leq xs n) xs := by
 
-    intros; exists (Nat.succ n); revert xs
-
-    induction n with
-    | zero =>
-      intros; unfold approx; rw [approx_zero_is_empty]
-      unfold approxWhile; simp; rw [approxWhile_zero_is_empty]
-    | succ m IH =>
-      intros xst inc
-      simp; simp at IH; unfold approx; unfold approxWhile
-      have H1 : decide (xst.head ≤ xst.get (m+1)) = true := by
-        unfold Stream'.head; apply decide_eq_true
-        rw [le_iff_eq_or_lt]; right
-        rw [← inc]; simp
-      rw [H1]; simp
-      have H2 : (xst.tail).get m = xst.get (m+1) := by
-        unfold Stream'.tail; unfold Stream'.get; simp
-      apply IH
-
-      intros i j; apply Iff.intro
-
-      intro i_le_j
-      unfold Stream'.get; unfold Stream'.tail
-      rw [← inc]; simp; assumption
-
-      intro h1
-      unfold Stream'.get at h1; unfold Stream'.tail at h1
-      rw [← inc] at h1; simp at h1
-      assumption
+    intros inc;
+    revert n
+    induction xs with
+    | bot => simp [approx, approxWhile]
+    | nil => simp [approx, approxWhile]
+    | cons x xs IH =>
+      intro n
+      simp [approx, approxWhile, leq]
+      cases (cons x xs).get n with
+      | none => simp; sorry
+      | some y => sorry
 
 private theorem four (x f : Nat)
-                     (xs : Stream' Nat)
-                     (x_in_xs : x ∈ xs)
-                     (inc : ∀ i j : Nat, i < j ↔ xs.get (i) < xs.get (j))
-  : approxWhile f (·≤x) xs =
-    approxUntil f (x≤·) xs
+                     (xs : InfiniteList Nat)
+                     (x_in_xs : mem x xs)
+                     (inc : increasing xs)
+  : approxWhile (leq xs x) xs =
+    approxUntil (geq xs x) xs
   := by
-  revert xs
-  induction f with
-  | zero =>
-    simp [approxUntil, approxWhile]
-  | succ m ih =>
-    intros xs x_in_xs inc
-    match xs.head.decLe x with
-    | isFalse f =>
-      match x.decLe xs.head with
-      | isFalse f' =>
-        exfalso
-        match x.le_or_le (xs.head) with
-        | (Or.inr r) =>
-          apply f
-          assumption
-        | (Or.inl l) =>
-          apply f'
-          assumption
-      | isTrue t' =>
-        have h1 := (Iff.mp le_iff_lt_or_eq) t'
-        cases h1 with
-        | inl l =>
-          cases x_in_xs with
-          | intro idx hs =>
-            cases idx with
-            | zero =>
-              unfold Stream'.head at *
-              exfalso
-              apply f
-              simp [hs]
-            | succ m =>
-              rw [hs] at l
-              unfold Stream'.head at *
-              have h2 := Iff.mpr (inc (m + 1) 0) l
-              exfalso
-              apply Nat.not_lt_zero
-              assumption
-        | inr r =>
-          exfalso
-          apply f
-          simp [r]
-    | isTrue t  =>
-      match x.decLe xs.head with
-      | isFalse f' =>
-        have ht := decide_eq_true t
-        have hf' := decide_eq_false f'
-        simp [approxUntil, approxWhile, ht, hf']
-        rw [ih]
-        cases x_in_xs with
-        | intro idx hs =>
-          cases idx with
-          | zero =>
-            exfalso
-            apply f'
-            simp [Stream'.head, hs]
-          | succ m =>
-            unfold Stream'.tail
-            exists m
-        intros i j
-        unfold Stream'.get
-        unfold Stream'.tail
-        constructor
-        . intros i_le_j
-          rw [← inc]
-          simp
-          assumption
-        . intro h
-          rw [← inc] at h
-          simp at h
-          assumption
-      | isTrue t'  =>
-        have ht := decide_eq_true t
-        have ht' := decide_eq_true t'
-        have h := ge_antisymm t t'
-        have h1 := inc 0 1
-        simp at h1
-        simp [approxUntil, approxWhile, ht, ht', h, h1]
-        have h2 : xs.tail.head = xs.get 1 := rfl
-        have h3 := decide_eq_false (not_le_of_lt h1)
-        rw [← h2] at h3
-        simp [approxWhile, Stream'.head]
-        cases m;
-          simp [h3, approxWhile];
-          simp [h3, approxWhile]
+    induction xs with
+    | bot => simp [approxWhile, approxUntil]
+    | nil => simp [approxWhile, approxUntil]
+    | cons x xs => sorry
 
 private theorem five (x y f : Nat)
-                     (xs ys : Stream' Nat)
-                     (x_in_xs_minus_ys : x ∈ setDiff f xs ys)
-                     (x_le_y : x < y)
-                     (inc : ∀ i j : Nat, i < j ↔ xs.get (i) < xs.get (j))
-  : approxWhile f (·≤x) (setDiff f xs ys) =
-    approxWhile f (·≤x) (setDiff f xs (listToStream (approxWhile f (·≤y) ys)))
+                     (xs ys : InfiniteList Nat) :
+                     mem y ys →
+                     mem x (setDiff f xs ys) →
+                     x < y →
+                     increasing xs →
+                     increasing ys →
+    approxWhile (leq xs x) (setDiff f' xs ys) =
+    approxWhile (leq xs x) (setDiff f' xs (approxWhile (leq ys y) ys))
   := by
-  revert x y xs ys
-  induction f with
-  | zero =>
-    simp [approxWhile_zero_is_empty]
-  | succ f IH =>
-    intros x y xs ys x_in_xs_minus_ys x_le_y inc
-    sorry
+   intros mem_y_ys mem_x_setdiff x_le_y inc_xs inc_ys
+   sorry
