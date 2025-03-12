@@ -249,24 +249,11 @@ private theorem five (x y f : Nat)
                      x < y →
                      increasing xs →
                      increasing ys →
-    approxWhile (leq (xs.get x)) (setDiff f' xs ys) =
-    approxWhile (leq (xs.get x)) (setDiff f' xs (approxWhile (leq (xs.get x)) ys))
+    approxWhile (leq x) (setDiff f' xs ys) =
+    approxWhile (leq x) (setDiff f' xs (approxWhile (leq y) ys))
   := by
-    intros mem_y_ys mem_x_setdiff x_le_y inc_xs inc_ys
-    generalize idx : xs.get x = i
-    cases i with
-    | none =>
-      have : ∀ l, approxWhile (fun x => true) l = l := by
-        intro l
-        induction l with
-        | bot => simp [approxWhile]
-        | cons l' ls' IH =>
-          simp [approxWhile]
-          rw [IH]
-      simp [approxWhile, leq, setDiff, this]
-    | some i' =>
-      simp [approxWhile, leq, setDiff]
-      sorry
+     intros mem_y_ys mem_x_setdiff x_le_y inc_xs inc_ys
+     sorry
 
 private theorem six (n : Nat)
                     (xss : InfiniteList (InfiniteList Nat)) :
