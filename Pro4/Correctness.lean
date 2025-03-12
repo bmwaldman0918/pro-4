@@ -67,18 +67,18 @@ def approxUntil (p : Nat → Bool) (s : InfiniteList Nat) : InfiniteList Nat :=
   | .cons x xs =>
     if not (p x)
       then .cons x (approxUntil p xs)
-      else .bot
-  | _ => s
+      else .cons x .bot
+  | _ => .bot
 
 def leq (idx : Option Nat) : Nat → Bool :=
   match idx with
   | none => λ _ => true
-  | some x => λ n => n ≤ x
+  | some x => λ n => decide (n ≤ x)
 
 def geq (idx : Option Nat) : Nat → Bool :=
   match idx with
   | none => λ _ => true
-  | some x => λ n => n ≥ x
+  | some x => λ n => decide (n ≥ x)
 
 -- If X < X' and X' is the head of an increasing list L' = X' :: L
 -- then X is not a member of L'
@@ -175,22 +175,29 @@ private theorem four (x : Nat)
                      (xs : InfiniteList Nat)
                      (x_in_xs : mem x xs)
                      (inc : increasing xs)
-  : approxWhile (leq xs x) xs =
-    approxUntil (geq xs x) xs
+  : approxWhile (·≤x) xs =
+    approxUntil (·≥x) xs
   := by
-    revert x
     induction xs with
     | bot => simp [approxWhile, approxUntil]
     | nil => simp [approxWhile, approxUntil]
     | cons x' xs IH =>
-      simp only [approxWhile, approxUntil, leq, geq]
-      intro x mem
-      generalize H : (cons x' xs).get x = h
-      cases h with
-      | none =>
-        simp only [get]
-        sorry
-      | some y => sorry
+      simp [approxWhile, approxUntil]
+      cases x_in_xs with
+      | inl h =>
+        rw [← h] at *
+        simp
+        cases xs
+      | inr h => sorry
+      rw [IH]
+      . sorry
+      . sorry
+      . unfold increasing at inc
+        cases xs;
+        simp at inc;
+        try assumption;
+        . assumption
+        . exact inc.right
 
 private theorem five (x y f : Nat)
                      (xs ys : InfiniteList Nat) :
@@ -199,8 +206,8 @@ private theorem five (x y f : Nat)
                      x < y →
                      increasing xs →
                      increasing ys →
-    approxWhile (leq xs x) (setDiff f' xs ys) =
-    approxWhile (leq xs x) (setDiff f' xs (approxWhile (leq ys y) ys))
+    approxWhile (leq (xs.get x)) (setDiff f' xs ys) =
+    approxWhile (leq (xs.get x)) (setDiff f' xs (approxWhile (leq ys y) ys))
   := by
    intros mem_y_ys mem_x_setdiff x_le_y inc_xs inc_ys
    sorry
