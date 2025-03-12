@@ -97,7 +97,7 @@ private theorem not_in_inc (x x' : Nat) (l : InfiniteList Nat) :
       . assumption
     | Or.inr h =>
       cases h
-  | nil =>
+/-   | nil =>
     intro x x' x_le_x' inc elem
     unfold mem at elem
     match elem with
@@ -106,7 +106,7 @@ private theorem not_in_inc (x x' : Nat) (l : InfiniteList Nat) :
       . assumption
       . assumption
     | Or.inr h =>
-      cases h
+      cases h -/
   | cons y ys IH =>
     intro x x' x_le_x' inc elem
     unfold mem at elem
@@ -131,7 +131,7 @@ private theorem three (n : Nat)
     intros inc def_to_n;
     induction xs with
     | bot => unfold approx; unfold approxWhile; simp
-    | nil => unfold approx; unfold approxWhile; simp
+    -- | nil => unfold approx; unfold approxWhile; simp
     | cons a as =>
       induction n with
       | zero =>
@@ -180,7 +180,7 @@ private theorem four (x : Nat)
   := by
     induction xs with
     | bot => simp [approxWhile, approxUntil]
-    | nil => simp [approxWhile, approxUntil]
+    -- | nil => simp [approxWhile, approxUntil]
     | cons x' xs IH =>
       simp [approxWhile, approxUntil]
       split
@@ -202,7 +202,7 @@ private theorem four (x : Nat)
             rw [eq_iff_le_not_lt]
             apply And.intro <;> assumption
           cases xs with
-          | nil => simp [approxWhile]
+          -- | nil => simp [approxWhile]
           | bot => simp [approxWhile]
           | cons x'' xs' =>
             simp [increasing] at inc
@@ -235,12 +235,6 @@ private theorem five (x y f : Nat)
     generalize idx : xs.get x = i
     cases i with
     | none =>
-      induction ys with
-      | bot => simp [setDiff, approxWhile]
-      | nil => cases mem_y_ys
-      | cons y' ys' IH =>
-        cases xs <;> cases f' <;> simp [approxWhile, leq, setDiff]
-        . sorry
-        . sorry
+      sorry
     | some i' =>
       sorry

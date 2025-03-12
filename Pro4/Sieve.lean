@@ -11,8 +11,8 @@ def setDiff (fuel : Nat) (l l' : InfiniteList Nat) : InfiniteList Nat :=
       match l, l' with
       | bot, _ => bot
       | _, bot => bot
-      | nil, _ => l'
-      | _, nil => l
+      -- | nil, _ => l'
+      -- | _, nil => l
       | cons x xs,
         cons y ys =>
         if x < y
@@ -53,8 +53,8 @@ def multiples (fuel: Nat) (p : Nat) : InfiniteList Nat :=
 -- strictly increasing streams L and L' into one.
 def merge (l l' : InfiniteList Nat) : InfiniteList Nat :=
     match l, l' with
-  | nil, _ => l'
-  | _, nil => l
+  -- | nil, _ => l'
+  -- | _, nil => l
   | bot, _ => bot
   | _, bot => bot
   | cons x xs,
@@ -71,7 +71,7 @@ def merge (l l' : InfiniteList Nat) : InfiniteList Nat :=
 def xmerge (l l' : InfiniteList Nat) : InfiniteList Nat :=
   match l with
   | bot => bot
-  | nil => bot
+  -- | nil => bot
   | cons x xs => cons x (merge xs l')
 
 -- Merges a sorted stream of sorted streams.
