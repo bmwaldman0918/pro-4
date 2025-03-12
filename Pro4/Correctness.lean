@@ -239,7 +239,8 @@ private theorem five (x y f : Nat)
       | bot => simp [setDiff, approxWhile]
       | nil => cases mem_y_ys
       | cons y' ys' IH =>
-        simp [approxWhile, leq, setDiff]
-        sorry
+        cases xs <;> cases f' <;> simp [approxWhile, leq, setDiff]
+        . sorry
+        . sorry
     | some i' =>
       sorry
