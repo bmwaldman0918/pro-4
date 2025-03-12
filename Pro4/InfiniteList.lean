@@ -1,4 +1,3 @@
-
 inductive InfiniteList (t : Type) where
   | nil       : InfiniteList t
   | bot       : InfiniteList t
