@@ -235,6 +235,14 @@ private theorem five (x y f : Nat)
     generalize idx : xs.get x = i
     cases i with
     | none =>
-      sorry
+      have : ∀ l, approxWhile (fun x => true) l = l := by
+        intro l
+        induction l with
+        | bot => simp [approxWhile]
+        | cons l' ls' IH =>
+          simp [approxWhile]
+          rw [IH]
+      simp [approxWhile, leq, setDiff, this]
     | some i' =>
+      simp [approxWhile, leq, setDiff]
       sorry
