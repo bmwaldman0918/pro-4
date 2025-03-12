@@ -183,21 +183,43 @@ private theorem four (x : Nat)
     | nil => simp [approxWhile, approxUntil]
     | cons x' xs IH =>
       simp [approxWhile, approxUntil]
-      cases x_in_xs with
-      | inl h =>
-        rw [← h] at *
-        simp
-        cases xs
-      | inr h => sorry
-      rw [IH]
-      . sorry
-      . sorry
-      . unfold increasing at inc
-        cases xs;
-        simp at inc;
-        try assumption;
-        . assumption
-        . exact inc.right
+      split
+      . case isTrue t =>
+        split
+        . case isTrue t' =>
+          rw [IH]
+          . cases x_in_xs with
+            | inl eq =>
+              exfalso
+              apply ne_of_lt t'
+              assumption
+            | inr rem =>
+              assumption
+          cases xs <;> try simp [increasing] at inc; assumption
+          . exact inc.right
+        . case isFalse f' =>
+          have eq : x' = x := by
+            rw [eq_iff_le_not_lt]
+            apply And.intro <;> assumption
+          cases xs with
+          | nil => simp [approxWhile]
+          | bot => simp [approxWhile]
+          | cons x'' xs' =>
+            simp [increasing] at inc
+            simp [approxWhile]
+            rw [← eq]
+            exact inc.left
+      . case isFalse f =>
+        split
+        . case isTrue t' =>
+          exfalso
+          apply f
+          apply le_of_lt
+          assumption
+        . case isFalse f' =>
+          exfalso
+          apply not_in_inc <;> try assumption
+          rw [lt_iff_not_le]; assumption
 
 private theorem five (x y f : Nat)
                      (xs ys : InfiniteList Nat) :
