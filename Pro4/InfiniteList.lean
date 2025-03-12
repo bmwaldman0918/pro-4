@@ -17,21 +17,27 @@ def InfiniteList.take {a : Type} (l : InfiniteList a) (i : Nat) : InfiniteList a
     | .cons a as => .cons a (take as i)
     | _ => l
 
-def increasing (l : InfiniteList Nat) : Prop :=
+def increasing (l : Option (InfiniteList Nat)) : Prop :=
   match l with
-  -- | .nil => True
-  | .bot => True
-  -- | .cons _ .nil => True
-  | .cons _ .bot => True
-  | .cons x (.cons x' xs) => (x < x') ∧ increasing (.cons x' xs)
+    | none => True
+    | some l' =>
+      match l' with
+      -- | .nil => True
+      | .bot => True
+      -- | .cons _ .nil => True
+      | .cons _ .bot => True
+      | .cons x (.cons x' xs) => (x < x') ∧ increasing (some (.cons x' xs))
 
-def InfiniteList.get (idx : Nat) (l : InfiniteList Nat) : Option Nat :=
+def InfiniteList.get {X : Type} (idx : Nat) (l : Option (InfiniteList X)) : Option X :=
   match l with
-  | .cons x xs =>
-    match idx with
-    | .zero => some x
-    | .succ m => get m xs
-  | _ => none
+  | none => none
+  | some l' =>
+    match l' with
+    | .cons x xs =>
+      match idx with
+      | .zero => some x
+      | .succ m => get m xs
+    | _ => none
 
 def mem (i : Nat) (l : InfiniteList Nat) : Prop :=
   match l with

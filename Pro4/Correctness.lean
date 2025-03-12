@@ -1,4 +1,5 @@
 import Mathlib.Data.Nat.Prime.Defs
+import Mathlib.Data.Option.Basic
 import Pro4.Sieve
 import Pro4.InfiniteList
 open InfiniteList
@@ -36,15 +37,18 @@ theorem sieve_correct : ∀ (n m : Nat), ∃ f, (take (primes f) n) = (take (pri
 --     | .succ n =>
 --       .cons x (approx n xs)
 
-def approx (n : Nat) (s : InfiniteList Nat) : InfiniteList Nat :=
+def approx {X : Type} (n : Nat) (s : Option (InfiniteList X)) : InfiniteList X :=
   match n with
   | .zero => .bot
   | .succ m =>
     match s with
-    | .cons x xs => .cons x (approx m xs)
-    | _ => .bot
-    -- | .bot => .bot
-    -- | .nil => .nil
+    | none => .bot -- i don't know about this
+    | some s' =>
+      match s' with
+      | .cons x xs => .cons x (approx m xs)
+      | _ => .bot
+      -- | .bot => .bot
+      -- | .nil => .nil
 
 -- def approxWhile (p : Nat → Bool) (s : InfiniteList Nat) : InfiniteList Nat :=
 --   match s with
@@ -54,13 +58,16 @@ def approx (n : Nat) (s : InfiniteList Nat) : InfiniteList Nat :=
 --       else .bot
 --   | _ => s
 
-def approxWhile (p : Nat → Bool) (s : InfiniteList Nat) : InfiniteList Nat :=
+def approxWhile (p : Nat → Bool) (s : Option (InfiniteList Nat)) : InfiniteList Nat :=
   match s with
-  | .cons x xs =>
-    if p x
-      then .cons x (approxWhile p xs)
-      else .bot
-  | _ => .bot
+  | none => .bot -- i'm not sure
+  | some s' =>
+    match s' with
+    | .cons x xs =>
+      if p x
+        then .cons x (approxWhile p xs)
+        else .bot
+    | _ => .bot
 
 def approxUntil (p : Nat → Bool) (s : InfiniteList Nat) : InfiniteList Nat :=
   match s with
@@ -79,6 +86,13 @@ def geq (idx : Option Nat) : Nat → Bool :=
   match idx with
   | none => λ _ => true
   | some x => λ n => decide (n ≥ x)
+
+private theorem merge_bot_is_bot :
+  ∀ s, merge s bot = bot := by
+  intros s
+  match s with
+  | bot => unfold merge; rfl
+  | cons a as => unfold merge; simp
 
 -- If X < X' and X' is the head of an increasing list L' = X' :: L
 -- then X is not a member of L'
@@ -119,57 +133,63 @@ private theorem not_in_inc (x x' : Nat) (l : InfiniteList Nat) :
       apply IH x y
       apply Nat.lt_trans
       . assumption
-      . exact inc.left
-      . exact inc.right
+      . unfold increasing at inc; simp at inc; exact inc.left
+      . unfold increasing at inc; simp at inc; exact inc.right
       . assumption
 
 private theorem three (n : Nat)
-                      (xs : InfiniteList Nat)
-  : (increasing xs) → (∀ i ≤ n, xs.get (i) ≠ none) →
-    approx (n+1) xs = approxWhile (leq (xs.get (n))) xs := by
+                      (xs : Option (InfiniteList Nat))
+  : (increasing xs) → (∀ i ≤ n, (InfiniteList.get i xs).isSome) →
+    approx (n + 1) xs = approxWhile (leq (InfiniteList.get n xs)) xs := by
 
     intros inc def_to_n;
     induction xs with
-    | bot => unfold approx; unfold approxWhile; simp
+    | none => unfold approx; unfold approxWhile; simp
     -- | nil => unfold approx; unfold approxWhile; simp
-    | cons a as =>
-      induction n with
-      | zero =>
-        simp; unfold approx; simp_all;
-        unfold approx; unfold approxWhile;
-        have h : leq (InfiniteList.get 0 (cons a as)) a = true := by
-          unfold leq; unfold InfiniteList.get; simp
-        rw [h]; simp; unfold InfiniteList.get; simp;
-        unfold approxWhile;
-        induction as with
-        | cons x' xs' IH =>
-          simp; unfold leq; simp
-          have h1 : ¬ (x' ≤ a) := by
-            unfold increasing at inc; simp; apply inc.left
-          simp [h1]
-        | _ => simp
+    | some xs' =>
+      induction xs' with
+      | bot => unfold approx; simp; unfold approxWhile; simp
+      | cons a as IH =>
+        induction n with
+        | zero =>
+          simp; unfold approx; simp_all;
+          unfold approx; unfold approxWhile;
+          have h : leq (InfiniteList.get 0 (cons a as)) a = true := by
+            unfold leq; unfold InfiniteList.get; simp
+          simp; rw [h]; simp; unfold InfiniteList.get; simp;
+          unfold approxWhile;
+          induction as with
+          | cons x' xs' IH1 =>
+            simp; unfold leq; simp
+            have h1 : ¬ (x' ≤ a) := by
+              unfold increasing at inc; simp; apply inc.left
+            simp [h1]
+          | _ => simp
 
-      -- succ case unfinished
-      | succ m IH =>
-        generalize H : (cons a as).get m = h
-        cases h with
-        | none =>
-          simp at def_to_n; unfold Not at def_to_n;
-          apply def_to_n at H; exfalso; assumption; simp
-        | some x =>
-
-        sorry
-        -- SUCC CASE ATTEMPT:
-        -- simp at IH; unfold approx; unfold approxWhile
-        -- have h0 : InfiniteList.get (m + 1) (cons a as) ≠ none := by
-        --   apply def_to_n; simp
-        -- have h : leq (InfiniteList.get (m + 1) (cons a as)) a := by
-        --   unfold leq
-        --   -- should match with some x
-        --   -- then decide that a <= x bc of inc
-        --   sorry
-        -- rw [h]; simp
-        -- sorry
+        -- succ case unfinished
+        | succ m IH2 =>
+          generalize H : InfiniteList.get m (some (cons a as)) = h
+          cases h with
+          | none =>
+            have h0 : (InfiniteList.get m (some (cons a as))).isNone := by
+              unfold Option.isNone; rw [H]
+            specialize def_to_n m; simp at def_to_n
+            -- def_to_n and h0 are exactly opposite
+            sorry
+          | some x =>
+            unfold approx; simp
+            unfold approxWhile;
+            have h0 : (InfiniteList.get (m + 1) (cons a as) = some x) := by
+              specialize def_to_n (m + 1); simp at def_to_n;
+              unfold Option.isSome at def_to_n;
+              -- since match is true should be able to extract
+              -- that InfiniteList.get m (some (cons a as)) = some val
+              sorry
+            have h1 : leq (InfiniteList.get (m + 1) (cons a as)) a := by
+              unfold leq;
+              sorry
+            simp [h1];
+            sorry
 
 private theorem four (x : Nat)
                      (xs : InfiniteList Nat)
@@ -196,7 +216,8 @@ private theorem four (x : Nat)
             | inr rem =>
               assumption
           cases xs <;> try simp [increasing] at inc; assumption
-          . exact inc.right
+          . unfold increasing; simp
+          . unfold increasing at inc; simp_all
         . case isFalse f' =>
           have eq : x' = x := by
             rw [eq_iff_le_not_lt]
@@ -246,3 +267,70 @@ private theorem five (x y f : Nat)
     | some i' =>
       simp [approxWhile, leq, setDiff]
       sorry
+
+private theorem six (n : Nat)
+                    (xss : InfiniteList (InfiniteList Nat)) :
+                    (n ≥ 0) →
+                    (∀ i ≤ n, (InfiniteList.get i (some xss)).isSome) →
+                    (∀ i ≤ n, increasing (InfiniteList.get i (some xss))) →
+                    (∀ m ≤ n, i < j ↔
+                      InfiniteList.get 0 (InfiniteList.get i (some xss))
+                      < InfiniteList.get 0 (InfiniteList.get j (some xss))) →
+  mergeAll (approx (n + 1) (xss))
+  = approxUntil (geq (InfiniteList.get 0 (InfiniteList.get n xss))) (mergeAll xss)
+  := by
+  intros pos_n def_to_n each_inc whole_inc;
+  induction n with
+  | zero =>
+    simp; unfold approx; simp; unfold approx
+    match H : xss with
+    | cons as ass =>
+      simp; unfold mergeAll; unfold xmerge;
+      match as with
+      | bot => simp; unfold approxUntil; rfl
+      | cons a as_tail =>
+        simp; unfold mergeAll; simp_all; rw [merge_bot_is_bot];
+        unfold approxUntil; simp;
+        have h : geq
+                  (InfiniteList.get 0
+                    (InfiniteList.get 0
+                      (some (cons (cons a as_tail) ass))
+                    )
+                  ) a = true := by
+          unfold InfiniteList.get; unfold InfiniteList.get;
+          simp; unfold geq; simp
+        rw [h]; simp
+    | bot => simp; unfold mergeAll; unfold approxUntil; rfl
+  | succ m IH =>
+    generalize InfiniteList.get 0 (InfiniteList.get m (some xss)) = b at *
+    unfold approx; simp
+    match H : xss with
+    | cons (cons a as) ass =>
+      simp; unfold mergeAll; unfold xmerge; simp;
+      sorry
+    | cons bot _ =>
+      simp; unfold mergeAll;
+      unfold xmerge; simp; unfold approxUntil; rfl
+    | bot => simp; unfold mergeAll; unfold approxUntil; rfl
+
+    -- match H : xss with
+    -- | cons as ass =>
+    --   if h : as = bot
+    --     then
+    --       simp; rw [h];
+    --       unfold mergeAll; unfold xmerge;
+    --       simp; unfold approxUntil; rfl
+    --   else
+    --     unfold approx; simp;
+    --     -- have h1 : prove that
+    --     -- approx m+1 (a :: as) :: ass = (a :: as) :: approx m ass
+
+    --      unfold mergeAll; unfold xmerge
+    --     match as with
+    --     | bot => simp at h
+    --     | cons a as_tail =>
+    --       simp; unfold mergeAll at IH;
+    --       unfold approx at IH; simp at IH;
+    --       unfold xmerge at IH; simp at IH;
+    --       sorry
+    -- | bot => simp; unfold mergeAll; unfold approxUntil; rfl
