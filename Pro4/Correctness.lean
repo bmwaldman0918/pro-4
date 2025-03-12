@@ -42,7 +42,7 @@ def approxWhile (p : Nat → Bool) (s : InfiniteList Nat) : InfiniteList Nat :=
     if p x
       then .cons x (approxWhile p xs)
       else .bot
-  | _ => s
+  | _ => .bot
 
 def approxUntil (p : Nat → Bool) (s : InfiniteList Nat) : InfiniteList Nat :=
   match s with
@@ -50,7 +50,7 @@ def approxUntil (p : Nat → Bool) (s : InfiniteList Nat) : InfiniteList Nat :=
     if not (p x)
       then .cons x (approxUntil p xs)
       else .cons x .bot
-  | _ => s
+  | _ => .bot
 
 def leq (idx : Option Nat) : Nat → Bool :=
   match idx with
@@ -130,12 +130,22 @@ private theorem four (x : Nat)
     | bot => simp [approxWhile, approxUntil]
     | nil => simp [approxWhile, approxUntil]
     | cons x' xs IH =>
-      cases x.decLt x' with
-      | isTrue t  =>
-        simp [approxWhile, approxUntil]
-        apply t
-        sorry
-      | isFalse f => sorry
+      simp [approxWhile, approxUntil]
+      cases x_in_xs with
+      | inl h =>
+        rw [← h] at *
+        simp
+        cases xs
+      | inr h => sorry
+      rw [IH]
+      . sorry
+      . sorry
+      . unfold increasing at inc
+        cases xs;
+        simp at inc;
+        try assumption;
+        . assumption
+        . exact inc.right
 
 private theorem five (x y f : Nat)
                      (xs ys : InfiniteList Nat) :
