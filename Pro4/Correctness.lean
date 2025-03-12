@@ -55,12 +55,12 @@ def approxUntil (p : Nat → Bool) (s : InfiniteList Nat) : InfiniteList Nat :=
 def leq (idx : Option Nat) : Nat → Bool :=
   match idx with
   | none => λ _ => true
-  | some x => λ n => n ≤ x
+  | some x => λ n => decide (n ≤ x)
 
 def geq (idx : Option Nat) : Nat → Bool :=
   match idx with
   | none => λ _ => true
-  | some x => λ n => n ≥ x
+  | some x => λ n => decide (n ≥ x)
 
 private theorem not_in_inc (x x' : Nat) (l : InfiniteList Nat) :
   x < x' → increasing (cons x' l) → ¬ mem x (cons x' l) :=
@@ -123,20 +123,19 @@ private theorem four (x : Nat)
                      (xs : InfiniteList Nat)
                      (x_in_xs : mem x xs)
                      (inc : increasing xs)
-  : approxWhile (leq (xs.get x)) xs =
-    approxUntil (geq (xs.get x)) xs
+  : approxWhile (·≤x) xs =
+    approxUntil (·≥x) xs
   := by
-    generalize H : xs.get x = h
     induction xs with
     | bot => simp [approxWhile, approxUntil]
     | nil => simp [approxWhile, approxUntil]
     | cons x' xs IH =>
-      simp only [approxWhile, approxUntil]
-      cases h with
-      | none =>
-        rw [IH]
-        simp [leq, geq]
-      | some y => sorry
+      cases x.decLt x' with
+      | isTrue t  =>
+        simp [approxWhile, approxUntil]
+        apply t
+        sorry
+      | isFalse f => sorry
 
 private theorem five (x y f : Nat)
                      (xs ys : InfiniteList Nat) :
