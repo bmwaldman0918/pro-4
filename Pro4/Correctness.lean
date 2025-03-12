@@ -229,7 +229,17 @@ private theorem five (x y f : Nat)
                      increasing xs →
                      increasing ys →
     approxWhile (leq (xs.get x)) (setDiff f' xs ys) =
-    approxWhile (leq (xs.get x)) (setDiff f' xs (approxWhile (leq ys y) ys))
+    approxWhile (leq (xs.get x)) (setDiff f' xs (approxWhile (leq (xs.get x)) ys))
   := by
-   intros mem_y_ys mem_x_setdiff x_le_y inc_xs inc_ys
-   sorry
+    intros mem_y_ys mem_x_setdiff x_le_y inc_xs inc_ys
+    generalize idx : xs.get x = i
+    cases i with
+    | none =>
+      induction ys with
+      | bot => simp [setDiff, approxWhile]
+      | nil => cases mem_y_ys
+      | cons y' ys' IH =>
+        simp [approxWhile, leq, setDiff]
+        sorry
+    | some i' =>
+      sorry

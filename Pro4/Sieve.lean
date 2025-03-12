@@ -5,22 +5,22 @@ open InfiniteList
 -- L, L': infinite lists
 -- Set difference; or, all elements in L but not in L'.
 def setDiff (fuel : Nat) (l l' : InfiniteList Nat) : InfiniteList Nat :=
-  match l, l' with
-  | nil, _ => l'
-  | _, nil => l
-  | bot, _ => bot
-  | _, bot => bot
-  | cons x xs,
-    cons y ys =>
-    match fuel with
+  match fuel with
     | .zero => bot
     | .succ m =>
-      if x < y
-        then cons x (setDiff m xs l')
-      else if x == y
-        then setDiff m xs ys
-      else -- if x > y
-        setDiff m l ys
+      match l, l' with
+      | bot, _ => bot
+      | _, bot => bot
+      | nil, _ => l'
+      | _, nil => l
+      | cons x xs,
+        cons y ys =>
+        if x < y
+          then cons x (setDiff m xs l')
+        else if x == y
+          then setDiff m xs ys
+        else -- if x > y
+          setDiff m l ys
 
 -- The natural numbers starting from 3.
 def nats (fuel : Nat) : InfiniteList Nat :=
