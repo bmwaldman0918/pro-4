@@ -4,6 +4,22 @@ import Pro4.Sieve
 import Pro4.InfiniteList
 open InfiniteList
 
+-- sanity check functions
+
+def all_primes (l : InfiniteList Nat) : Bool :=
+  match l with
+  | bot => true
+  | cons x xs => Nat.Prime x ∧ all_primes xs
+
+#eval (all_primes (primes 100))
+
+def all_comp (l : InfiniteList Nat) : Bool :=
+  match l with
+  | bot => true
+  | cons x xs => not (Nat.Prime x) ∧ all_comp xs
+
+#eval (all_comp (composites 100))
+
 -- proving the correctness of the sieve
 -- take lemma -- infinite lists are equal if every shared prefix is equal
 -- we want to prove that there exists a fuel f for which we can produce any arbitrary number x of prime numbers
@@ -22,9 +38,19 @@ def primes' (fuel : Nat) : InfiniteList Nat :=
         else (primeHelper m (next + 1))
   primeHelper fuel 0
 
+def composites' (fuel : Nat) : InfiniteList Nat :=
+  let rec compositeHelper (fuel next : Nat) : InfiniteList Nat :=
+    match fuel with
+    | .zero => .bot
+    | .succ m =>
+      if not (Nat.Prime next)
+        then .cons next (compositeHelper m (next + 1))
+        else (compositeHelper m (next + 1))
+  compositeHelper fuel 0
+
 #eval primes' 100
 
-theorem sieve_correct : ∀ (n m : Nat), ∃ f, (take (primes f) n) = (take (primes' m) n) :=
+theorem sieve_correct' : ∀ (n m : Nat), ∃ f, (take (primes f) n) = (take (primes' m) n) :=
   by sorry
 
 -- def approx (n : Nat) (s : InfiniteList Nat) : InfiniteList Nat :=
@@ -139,10 +165,10 @@ private theorem not_in_inc (x x' : Nat) (l : InfiniteList Nat) :
 
 private theorem three (n : Nat)
                       (xs : Option (InfiniteList Nat))
-  : (increasing xs) → (∀ i ≤ n, (InfiniteList.get i xs).isSome) →
+  : (increasing xs) → -- (∀ i ≤ n, (InfiniteList.get i xs).isSome) →
     approx (n + 1) xs = approxWhile (leq (InfiniteList.get n xs)) xs := by
 
-    intros inc def_to_n;
+    intros inc --def_to_n;
     induction xs with
     | none => unfold approx; unfold approxWhile; simp
     -- | nil => unfold approx; unfold approxWhile; simp
@@ -173,15 +199,15 @@ private theorem three (n : Nat)
           | none =>
             have h0 : (InfiniteList.get m (some (cons a as))).isNone := by
               unfold Option.isNone; rw [H]
-            specialize def_to_n m; simp at def_to_n
+            -- specialize def_to_n m; simp at def_to_n
             -- def_to_n and h0 are exactly opposite
             sorry
           | some x =>
             unfold approx; simp
             unfold approxWhile;
             have h0 : (InfiniteList.get (m + 1) (cons a as) = some x) := by
-              specialize def_to_n (m + 1); simp at def_to_n;
-              unfold Option.isSome at def_to_n;
+              -- specialize def_to_n (m + 1); simp at def_to_n;
+              -- unfold Option.isSome at def_to_n;
               -- since match is true should be able to extract
               -- that InfiniteList.get m (some (cons a as)) = some val
               sorry
@@ -289,11 +315,11 @@ private theorem six (n : Nat)
         rw [h]; simp
     | bot => simp; unfold mergeAll; unfold approxUntil; rfl
   | succ m IH =>
-    generalize InfiniteList.get 0 (InfiniteList.get m (some xss)) = b at *
+    generalize H' : InfiniteList.get 0 (InfiniteList.get m (some xss)) = b at *
     unfold approx; simp
     match H : xss with
     | cons (cons a as) ass =>
-      simp; unfold mergeAll; unfold xmerge; simp;
+      simp [approx]
       sorry
     | cons bot _ =>
       simp; unfold mergeAll;
@@ -321,3 +347,41 @@ private theorem six (n : Nat)
     --       unfold xmerge at IH; simp at IH;
     --       sorry
     -- | bot => simp; unfold mergeAll; unfold approxUntil; rfl
+
+def leq_sq (idx : Option Nat) : Nat → Bool :=
+  match idx with
+  | none => λ _ => true
+  | some x => λ n => decide (n ≤ x)
+
+private theorem seven (n : Nat) :
+  ∀ f, ∃ f', approx (n + 1) (primes' (f + 3)) = approxWhile (leq (get (n + 1) (primes' f')))
+    (makeP f (approxWhile (leq_sq (get n (primes' f'))) (some (composites' f')))) :=
+  by
+  intro f
+  induction f with
+  | zero =>
+    cases n with
+    | zero =>
+      exists 0
+      simp [makeP, approxWhile, leq, primes', composites']
+      simp [primes'.primeHelper, composites'.compositeHelper]
+      simp [approx, InfiniteList.get]
+      simp [Nat.prime_two]
+      simp [Nat.Prime, InfiniteList.get, approxWhile]
+      simp [setDiff, leq_sq, natsThree, natsThree.natsHelper, approxWhile]
+    | succ n' =>
+      exists 2
+      simp
+      rw [three]
+      simp [makeP, approxWhile, leq, primes', composites']
+      simp [primes'.primeHelper, composites'.compositeHelper]
+      simp [Nat.prime_two]
+      simp [Nat.Prime, InfiniteList.get, approxWhile]
+      simp [setDiff, leq_sq, natsThree, natsThree.natsHelper, approxWhile]
+      unfold increasing
+      simp [primes', primes'.primeHelper, Nat.prime_two]
+      simp [Nat.Prime]
+  | succ f' IH =>
+    rw [three]
+    . sorry
+    . sorry
