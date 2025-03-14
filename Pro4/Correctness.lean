@@ -163,12 +163,12 @@ private theorem not_in_inc (x x' : Nat) (l : InfiniteList Nat) :
       . unfold increasing at inc; simp at inc; exact inc.right
       . assumption
 
-private lemma take_one_equals_get_zero (l : InfiniteList A) :
-  (InfiniteList.get 0 l).isSome → InfiniteList.get 0 l = (InfiniteList.take l 1).get 0 := by
-  intros h; unfold InfiniteList.get take; simp;
-  match l with
-  | cons x xs => simp
-  | bot => simp
+-- private lemma take_one_equals_get_zero (l : InfiniteList A) :
+--   (InfiniteList.get 0 l).isSome → InfiniteList.get 0 l = (InfiniteList.take l 1).get 0 := by
+--   intros h; unfold InfiniteList.get take; simp;
+--   match l with
+--   | cons x xs => simp
+--   | bot => simp
 
 private lemma tail_n_equals_n_plus_one (l : InfiniteList A) :
   (InfiniteList.get (n+1) l) = InfiniteList.get n (InfiniteList.tail l) := by
@@ -183,12 +183,17 @@ private lemma tail_n_equals_n_plus_one (l : InfiniteList A) :
       | bot => simp [InfiniteList.get]
       | cons x' xs' => simp [InfiniteList.get]
 
+private lemma approx_plus_1 (l : InfiniteList A) :
+  approx (n+1) l
+  = InfiniteList.appendElem (approx n (some l)) (InfiniteList.get n l) := by
+  sorry
+
 private theorem three (n : Nat)
                       (xs : InfiniteList Nat)
   : (increasing xs) → -- (∀ i ≤ n, (InfiniteList.get i xs).isSome) →
     approx (n + 1) xs = approxWhile (leq (InfiniteList.get n xs)) xs := by
 
-    intros inc --def_to_n;
+    intros inc -- def_to_n;
     induction n with
     | zero =>
       simp [approx, approxWhile];
@@ -211,15 +216,17 @@ private theorem three (n : Nat)
         rw [tail_n_equals_n_plus_one];
         unfold approxWhile; simp; split
         . case succ.cons.isTrue =>
-          unfold tail; simp_all;
+          rewrite [approx_plus_1 (l := (cons x xs))];
+          rw [IH]; unfold InfiniteList.get; unfold tail; simp;
+          -- these are the same but i really can't
+          -- wrestle with lean anymore
           sorry
         . case succ.cons.isFalse h =>
           unfold approx; simp; unfold Not at h; apply h;
           unfold tail; simp; unfold increasing at inc;
-          -- this is true by definition
-          -- goal is leq (xs.get n') x = true
+          -- this is also true by definition
+          -- (goal is leq (xs.get n') x = true)
           -- since cons x xs is strictly increasing
-          -- but i can't wrestle with lean anymore
           sorry
 
 private theorem four (x : Nat)
@@ -371,9 +378,6 @@ private theorem six (n : Nat)
   --       unfold mergeAll at IH;
 
 
-
-  --       sorry
-
 def leq_sq (idx : Option Nat) : Nat → Bool :=
   match idx with
   | none => λ _ => true
@@ -411,3 +415,9 @@ private theorem seven (n : Nat) :
     rw [three]
     . sorry
     . sorry
+
+private theorem eight (n : Nat) :
+  ∀ f, ∃ f', approx n (primes' (f + 3)) = approx n (some (primes f'))
+            /\ approxWhile (leq_sq (get n (primes' f'))) (some (composites' f'))
+                = approxWhile (leq_sq (get n (primes' f))) (some (composites' f)) :=
+    by sorry
