@@ -137,59 +137,64 @@ private theorem not_in_inc (x x' : Nat) (l : InfiniteList Nat) :
       . unfold increasing at inc; simp at inc; exact inc.right
       . assumption
 
+private lemma take_one_equals_get_zero (l : InfiniteList A) :
+  (InfiniteList.get 0 l).isSome → InfiniteList.get 0 l = (InfiniteList.take l 1).get 0 := by
+  intros h; unfold InfiniteList.get take; simp;
+  match l with
+  | cons x xs => simp
+  | bot => simp
+
+private lemma tail_n_equals_n_plus_one (l : InfiniteList A) :
+  (InfiniteList.get (n+1) l) = InfiniteList.get n (InfiniteList.tail l) := by
+  cases l with
+  | bot => unfold InfiniteList.get tail; simp
+  | cons x xs =>
+    unfold InfiniteList.get tail; simp;
+    cases n with
+    | zero => unfold InfiniteList.get; simp
+    | succ n' =>
+      match xs with
+      | bot => simp [InfiniteList.get]
+      | cons x' xs' => simp [InfiniteList.get]
+
 private theorem three (n : Nat)
-                      (xs : Option (InfiniteList Nat))
+                      (xs : InfiniteList Nat)
   : (increasing xs) → (∀ i ≤ n, (InfiniteList.get i xs).isSome) →
     approx (n + 1) xs = approxWhile (leq (InfiniteList.get n xs)) xs := by
 
     intros inc def_to_n;
-    induction xs with
-    | none => unfold approx; unfold approxWhile; simp
-    -- | nil => unfold approx; unfold approxWhile; simp
-    | some xs' =>
-      induction xs' with
-      | bot => unfold approx; simp; unfold approxWhile; simp
-      | cons a as IH =>
-        induction n with
-        | zero =>
-          simp; unfold approx; simp_all;
-          unfold approx; unfold approxWhile;
-          have h : leq (InfiniteList.get 0 (cons a as)) a = true := by
-            unfold leq; unfold InfiniteList.get; simp
-          simp; rw [h]; simp; unfold InfiniteList.get; simp;
-          unfold approxWhile;
-          induction as with
-          | cons x' xs' IH1 =>
-            simp; unfold leq; simp
-            have h1 : ¬ (x' ≤ a) := by
-              unfold increasing at inc; simp; apply inc.left
-            simp [h1]
-          | _ => simp
+    induction n with
+    | zero =>
+      simp [approx, approxWhile];
+      match xs with
+      | bot => unfold approxWhile; simp_all
+      | cons x xs =>
+        unfold InfiniteList.get leq approxWhile; simp_all;
+        match xs with
+        | bot => unfold approxWhile; simp
+        | cons x' xs' =>
+          unfold increasing at inc; unfold approxWhile; simp_all;
+          rw [← not_le] at inc; split
+          . exfalso; apply inc.left; assumption
+          . simp
 
-        -- succ case unfinished
-        | succ m IH2 =>
-          generalize H : InfiniteList.get m (some (cons a as)) = h
-          cases h with
-          | none =>
-            have h0 : (InfiniteList.get m (some (cons a as))).isNone := by
-              unfold Option.isNone; rw [H]
-            specialize def_to_n m; simp at def_to_n
-            -- def_to_n and h0 are exactly opposite
-            sorry
-          | some x =>
-            unfold approx; simp
-            unfold approxWhile;
-            have h0 : (InfiniteList.get (m + 1) (cons a as) = some x) := by
-              specialize def_to_n (m + 1); simp at def_to_n;
-              unfold Option.isSome at def_to_n;
-              -- since match is true should be able to extract
-              -- that InfiniteList.get m (some (cons a as)) = some val
-              sorry
-            have h1 : leq (InfiniteList.get (m + 1) (cons a as)) a := by
-              unfold leq;
-              sorry
-            simp [h1];
-            sorry
+    | succ n' IH =>
+      induction xs with
+      | bot => simp [approx, approxWhile]
+      | cons x xs IH1 =>
+        rw [tail_n_equals_n_plus_one];
+        unfold approxWhile; simp; split
+        . case succ.cons.isTrue =>
+          unfold tail; simp_all;
+          sorry
+        . case succ.cons.isFalse h =>
+          unfold approx; simp; unfold Not at h; apply h;
+          unfold tail; simp; unfold increasing at inc;
+          -- this is true by definition
+          -- goal is leq (xs.get n') x = true
+          -- since cons x xs is strictly increasing
+          -- but i can't wrestle with lean anymore
+          sorry
 
 private theorem four (x : Nat)
                      (xs : InfiniteList Nat)
@@ -271,66 +276,69 @@ private theorem five (x y f : Nat)
 private theorem six (n : Nat)
                     (xss : InfiniteList (InfiniteList Nat)) :
                     (n ≥ 0) →
-                    (∀ i ≤ n, (InfiniteList.get i (some xss)).isSome) →
-                    (∀ i ≤ n, increasing (InfiniteList.get i (some xss))) →
+                    (∀ i ≤ n, (InfiniteList.get i xss).isSome) →
+                    (∀ i ≤ n, increasing (InfiniteList.get i xss)) →
                     (∀ m ≤ n, i < j ↔
-                      InfiniteList.get 0 (InfiniteList.get i (some xss))
-                      < InfiniteList.get 0 (InfiniteList.get j (some xss))) →
+                      InfiniteList.get 0 (InfiniteList.get i xss)
+                      < InfiniteList.get 0 (InfiniteList.get j xss)) →
   mergeAll (approx (n + 1) (xss))
   = approxUntil (geq (InfiniteList.get 0 (InfiniteList.get n xss))) (mergeAll xss)
   := by
   intros pos_n def_to_n each_inc whole_inc;
-  induction n with
-  | zero =>
-    simp; unfold approx; simp; unfold approx
-    match H : xss with
-    | cons as ass =>
-      simp; unfold mergeAll; unfold xmerge;
-      match as with
-      | bot => simp; unfold approxUntil; rfl
-      | cons a as_tail =>
-        simp; unfold mergeAll; simp_all; rw [merge_bot_is_bot];
-        unfold approxUntil; simp;
-        have h : geq
-                  (InfiniteList.get 0
-                    (InfiniteList.get 0
-                      (some (cons (cons a as_tail) ass))
-                    )
-                  ) a = true := by
-          unfold InfiniteList.get; unfold InfiniteList.get;
-          simp; unfold geq; simp
-        rw [h]; simp
-    | bot => simp; unfold mergeAll; unfold approxUntil; rfl
-  | succ m IH =>
-    generalize InfiniteList.get 0 (InfiniteList.get m (some xss)) = b at *
-    unfold approx; simp
-    match H : xss with
-    | cons (cons a as) ass =>
-      simp; unfold mergeAll; unfold xmerge; simp;
-      sorry
-    | cons bot _ =>
-      simp; unfold mergeAll;
-      unfold xmerge; simp; unfold approxUntil; rfl
-    | bot => simp; unfold mergeAll; unfold approxUntil; rfl
+  induction xss with
+  | bot => unfold mergeAll; unfold approxUntil; unfold approx; simp
+  | cons head tail IH =>
+    match head, tail with
+    | cons x' xs', xss' =>
+      induction n with
+      | zero => sorry
+      | succ n' IH1 =>
+        unfold mergeAll; unfold approx; simp;
+        unfold approx; simp;
+        sorry
+    | bot, _ =>
+      unfold approx; simp; unfold mergeAll; unfold xmerge;
+      simp; unfold approxUntil; rfl
 
-    -- match H : xss with
-    -- | cons as ass =>
-    --   if h : as = bot
-    --     then
-    --       simp; rw [h];
-    --       unfold mergeAll; unfold xmerge;
-    --       simp; unfold approxUntil; rfl
-    --   else
-    --     unfold approx; simp;
-    --     -- have h1 : prove that
-    --     -- approx m+1 (a :: as) :: ass = (a :: as) :: approx m ass
 
-    --      unfold mergeAll; unfold xmerge
-    --     match as with
-    --     | bot => simp at h
-    --     | cons a as_tail =>
-    --       simp; unfold mergeAll at IH;
-    --       unfold approx at IH; simp at IH;
-    --       unfold xmerge at IH; simp at IH;
-    --       sorry
-    -- | bot => simp; unfold mergeAll; unfold approxUntil; rfl
+  -- induction n with
+  -- | zero =>
+  --   simp; unfold approx; simp; unfold approx
+  --   match H : xss with
+  --   | cons as ass =>
+  --     simp; unfold mergeAll; unfold xmerge;
+  --     match as with
+  --     | bot => simp; unfold approxUntil; rfl
+  --     | cons a as_tail =>
+  --       simp; unfold mergeAll; simp_all; rw [merge_bot_is_bot];
+  --       unfold approxUntil; simp;
+  --       have h : geq
+  --                 (InfiniteList.get 0
+  --                   (InfiniteList.get 0
+  --                     (some (cons (cons a as_tail) ass))
+  --                   )
+  --                 ) a = true := by
+  --         unfold InfiniteList.get; unfold InfiniteList.get;
+  --         simp; unfold geq; simp
+  --       rw [h]; simp
+  --   | bot => simp; unfold mergeAll; unfold approxUntil; rfl
+  -- | succ m IH =>
+  --   generalize InfiniteList.get 0 (InfiniteList.get m (some xss)) = b at *
+  --   induction xss with
+  --   | bot => unfold approx; simp; unfold mergeAll; unfold approxUntil; rfl
+  --   | cons xs xss' IH1 => -- xss = (xs :: xss')
+  --     if H : xs = bot
+  --       then
+  --         unfold approx; simp; unfold mergeAll;
+  --         unfold xmerge; unfold approxUntil;
+  --         simp; rw [H]
+  --     else
+  --       -- xs = (x' :: xs'), xss = (x' :: xs') :: xss'
+  --       -- xss' = (a' :: as') :: ass'
+  --       -- xss = (x' :: xs') :: (a' :: as') :: ass'
+  --       unfold approx; simp;
+  --       unfold mergeAll at IH;
+
+
+
+  --       sorry
