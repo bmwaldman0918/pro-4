@@ -320,7 +320,7 @@ private theorem six (n : Nat)
         rw [h]; simp
     | bot => simp; unfold mergeAll; unfold approxUntil; rfl
   | succ m IH =>
-    generalize H' : InfiniteList.get 0 (InfiniteList.get m (some xss)) = b at *
+    -- generalize H' : InfiniteList.get 0 (InfiniteList.get m xss) = b at *
     unfold approx; simp
     match H : xss with
     | cons (cons a as) ass =>
