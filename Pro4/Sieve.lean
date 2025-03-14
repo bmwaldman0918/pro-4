@@ -101,7 +101,7 @@ mutual
     | Nat.succ f => makeP f (composites f)
 
   def composites (fuel : Nat) : InfiniteList Nat :=
-      match fuel with
+    match fuel with
     | Nat.zero => bot
     | Nat.succ f => makeC f (primes f)
 
